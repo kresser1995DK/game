@@ -25,12 +25,15 @@
     }
 </script>
 <style>
+    * { box-sizing: border-box; }
     body {
         background-color: #05070a;
         color: #d1d5db;
         font-family: 'Rajdhani', sans-serif;
         overflow-x: hidden;
         touch-action: manipulation;
+        margin: 0;
+        padding: 0;
     }
     .scanline {
         background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 255, 0, 0.03));
@@ -38,19 +41,9 @@
         pointer-events: none;
     }
     .glow-accent { text-shadow: 0 0 10px rgba(0, 240, 255, 0.65); }
-    .glow-danger { text-shadow: 0 0 10px rgba(255, 0, 85, 0.65); }
-    .glow-success { text-shadow: 0 0 10px rgba(0, 255, 102, 0.65); }
-    .glow-gold { text-shadow: 0 0 10px rgba(255, 209, 102, 0.65); }
-
-    .view-hidden {
-        display: none !important;
-    }
-    .view-active-grid {
-        display: grid !important;
-    }
-    .view-active-flex {
-        display: flex !important;
-    }
+    .view-hidden { display: none !important; }
+    .view-active-grid { display: grid !important; }
+    .view-active-flex { display: flex !important; }
 </style>
 
 
@@ -58,22 +51,22 @@
 <div id="app" class="relative z-10 w-full min-h-screen flex flex-col justify-between">
     
     <!-- TOP STATUS HEADER -->
-    <header class="w-full bg-tactical-panel border-b border-tactical-border px-4 py-2 flex items-center justify-between">
+    <header class="w-full bg-[#0c1017] border-b border-[#1a2333] px-4 py-2 flex items-center justify-between">
         <div class="flex items-center space-x-3">
-            <i class="fa-solid fa-satellite-dish text-tactical-accent animate-pulse text-xl"></i>
+            <i class="fa-solid fa-satellite-dish text-[#00f0ff] animate-pulse text-xl"></i>
             <div>
-                <h1 class="text-lg font-bold tracking-widest text-white uppercase font-tactical">AEGIS // TACTICAL COMMS & BASE COMMAND</h1>
+                <h1 class="text-base sm:text-lg font-bold tracking-widest text-white uppercase font-tactical">AEGIS // TACTICAL COMMS & BASE COMMAND</h1>
                 <div class="text-xs font-mono text-gray-400 flex items-center gap-2">
-                    <span>SYS: <span id="systemModeBadge" class="text-tactical-accent font-bold">HOST COMMAND [PC]</span></span>
+                    <span>SYS: <span id="systemModeBadge" class="text-[#00f0ff] font-bold">HOST COMMAND [PC]</span></span>
                     <span>•</span>
-                    <span>LINK: <span id="connStatusText" class="text-tactical-warn font-bold">INITIALISERER...</span></span>
+                    <span>LINK: <span id="connStatusText" class="text-[#ffb703] font-bold">INITIALISERER...</span></span>
                 </div>
             </div>
         </div>
 
         <!-- Manual Role Switcher Toggle Button -->
         <div class="flex items-center space-x-2">
-            <button id="toggleRoleBtn" class="px-3 py-1 text-xs font-mono border border-tactical-accent text-tactical-accent hover:bg-tactical-accent hover:text-black rounded transition uppercase">
+            <button id="toggleRoleBtn" class="px-3 py-1 text-xs font-mono border border-[#00f0ff] text-[#00f0ff] hover:bg-[#00f0ff] hover:text-black rounded transition uppercase">
                 Skift Til Mobil Visning
             </button>
         </div>
@@ -84,15 +77,15 @@
     <!-- ========================================== -->
     <main id="hostView" class="view-active-grid flex-1 p-4 md:p-6 grid-cols-1 lg:grid-cols-12 gap-6 max-w-7xl mx-auto w-full">
         
-        <!-- LEFT COLUMN: OPERATIVE TELEMETRY & COMMS (7 Cols) -->
+        <!-- LEFT COLUMN: OPERATIVE TELEMETRY, 3D WORLD & COMMS (7 Cols) -->
         <div class="lg:col-span-7 flex flex-col space-y-6">
             
             <!-- Telemetry Cards -->
-            <div class="bg-tactical-panel border border-tactical-border rounded-lg p-5 shadow-2xl relative overflow-hidden">
-                <div class="flex justify-between items-center border-b border-tactical-border pb-3 mb-4">
+            <div class="bg-[#0c1017] border border-[#1a2333] rounded-lg p-5 shadow-2xl relative overflow-hidden">
+                <div class="flex justify-between items-center border-b border-[#1a2333] pb-3 mb-4">
                     <div class="flex items-center space-x-2">
-                        <span id="hostPulseDot" class="w-2.5 h-2.5 rounded-full bg-tactical-warn animate-ping"></span>
-                        <h2 class="text-xl font-bold uppercase tracking-wider text-tactical-accent font-tactical">Felt-Enhed Telemetri</h2>
+                        <span id="hostPulseDot" class="w-2.5 h-2.5 rounded-full bg-[#ffb703] animate-ping"></span>
+                        <h2 class="text-xl font-bold uppercase tracking-wider text-[#00f0ff]">Felt-Enhed Telemetri</h2>
                     </div>
                     <span class="text-xs font-mono px-2 py-0.5 rounded bg-gray-900 border border-gray-700 text-gray-300">
                         OPERATIVE: #RUNNER-5
@@ -101,27 +94,27 @@
 
                 <!-- Live KPI Grid -->
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-                    <div class="bg-tactical-bg border border-tactical-border p-3 rounded">
+                    <div class="bg-[#05070a] border border-[#1a2333] p-3 rounded">
                         <div class="text-xs font-mono text-gray-400 uppercase">Hastighed</div>
-                        <div id="hostSpeedVal" class="text-3xl sm:text-4xl font-bold text-tactical-accent font-mono glow-accent">0.0</div>
+                        <div id="hostSpeedVal" class="text-3xl sm:text-4xl font-bold text-[#00f0ff] font-mono glow-accent">0.0</div>
                         <div class="text-xs font-mono text-gray-500">KM/T</div>
                     </div>
 
-                    <div class="bg-tactical-bg border border-tactical-border p-3 rounded">
+                    <div class="bg-[#05070a] border border-[#1a2333] p-3 rounded">
                         <div class="text-xs font-mono text-gray-400 uppercase">Distance</div>
                         <div id="hostDistVal" class="text-3xl sm:text-4xl font-bold text-white font-mono">0.00</div>
                         <div class="text-xs font-mono text-gray-500">KILOMETER</div>
                     </div>
 
-                    <div class="bg-tactical-bg border border-tactical-border p-3 rounded">
+                    <div class="bg-[#05070a] border border-[#1a2333] p-3 rounded">
                         <div class="text-xs font-mono text-gray-400 uppercase">Pace</div>
-                        <div id="hostPaceVal" class="text-3xl sm:text-4xl font-bold text-tactical-warn font-mono">0'00"</div>
+                        <div id="hostPaceVal" class="text-3xl sm:text-4xl font-bold text-[#ffb703] font-mono">0'00"</div>
                         <div class="text-xs font-mono text-gray-500">MIN/KM</div>
                     </div>
 
-                    <div class="bg-tactical-bg border border-tactical-border p-3 rounded">
+                    <div class="bg-[#05070a] border border-[#1a2333] p-3 rounded">
                         <div class="text-xs font-mono text-gray-400 uppercase">Missionstid</div>
-                        <div id="hostTimeVal" class="text-3xl sm:text-4xl font-bold text-tactical-warn font-mono">00:00</div>
+                        <div id="hostTimeVal" class="text-3xl sm:text-4xl font-bold text-[#ffb703] font-mono">00:00</div>
                         <div class="text-xs font-mono text-gray-500">MM:SS</div>
                     </div>
                 </div>
@@ -129,39 +122,39 @@
                 <!-- Mission Goal Progress & Story Title -->
                 <div class="mt-6">
                     <div class="flex justify-between items-center text-xs font-mono mb-1">
-                        <span class="text-gray-300 uppercase">Mission: <span id="hostObjectiveText" class="text-tactical-gold font-bold">Genererer historie...</span></span>
-                        <span id="hostProgressPercent" class="text-tactical-accent font-bold">0%</span>
+                        <span class="text-gray-300 uppercase">Mission: <span id="hostObjectiveText" class="text-[#ffd166] font-bold">Genererer historie...</span></span>
+                        <span id="hostProgressPercent" class="text-[#00f0ff] font-bold">0%</span>
                     </div>
-                    <div class="w-full bg-tactical-bg border border-tactical-border h-3 rounded-full overflow-hidden p-0.5">
-                        <div id="hostProgressBar" class="h-full bg-gradient-to-r from-tactical-accent to-tactical-success w-0 rounded-full transition-all duration-300 shadow-lg"></div>
+                    <div class="w-full bg-[#05070a] border border-[#1a2333] h-3 rounded-full overflow-hidden p-0.5">
+                        <div id="hostProgressBar" class="h-full bg-gradient-to-r from-[#00f0ff] to-[#00ff66] w-0 rounded-full transition-all duration-300 shadow-lg"></div>
                     </div>
-                    <div id="hostMissionStoryBrief" class="mt-2 text-xs font-mono text-gray-400 italic bg-tactical-bg/60 p-2 rounded border border-tactical-border/50">
+                    <div id="hostMissionStoryBrief" class="mt-2 text-xs font-mono text-gray-400 italic bg-[#05070a]/60 p-2 rounded border border-[#1a2333]/50">
                         "Venter på missionens start via GPS..."
                     </div>
                 </div>
             </div>
 
             <!-- 3D INTERACTIVE BASE & ROVER SIMULATOR -->
-            <div class="bg-tactical-panel border border-tactical-border rounded-lg p-4 shadow-2xl relative">
-                <div class="flex justify-between items-center border-b border-tactical-border pb-3 mb-3">
+            <div class="bg-[#0c1017] border border-[#1a2333] rounded-lg p-4 shadow-2xl relative">
+                <div class="flex justify-between items-center border-b border-[#1a2333] pb-3 mb-3">
                     <div class="flex items-center space-x-2">
-                        <i class="fa-solid fa-gamepad text-tactical-accent text-lg"></i>
-                        <h3 class="text-md font-bold uppercase tracking-wider text-white font-tactical">3D Outpost & Rover Simulation</h3>
+                        <i class="fa-solid fa-gamepad text-[#00f0ff] text-lg"></i>
+                        <h3 class="text-md font-bold uppercase tracking-wider text-white">3D Outpost & Rover Simulation</h3>
                     </div>
                     <div class="flex items-center space-x-3 text-xs font-mono">
-                        <span class="text-gray-400">BRÆNDSTOF: <span id="roverFuelBadge" class="text-tactical-warn font-bold">100%</span></span>
-                        <span class="bg-tactical-bg border border-gray-700 px-2 py-0.5 rounded text-[11px] text-gray-300">STYRING: WASD / PILE</span>
+                        <span class="text-gray-400">BRÆNDSTOF: <span id="roverFuelBadge" class="text-[#ffb703] font-bold">100%</span></span>
+                        <span class="bg-[#05070a] border border-gray-700 px-2 py-0.5 rounded text-[11px] text-gray-300">STYRING: WASD / PILE</span>
                     </div>
                 </div>
 
                 <!-- 3D Canvas Container -->
-                <div class="relative w-full h-80 rounded overflow-hidden border border-tactical-border bg-black">
+                <div class="relative w-full h-80 rounded overflow-hidden border border-[#1a2333] bg-black">
                     <canvas id="threeCanvas" class="w-full h-full block"></canvas>
                     
                     <!-- Overlay UI inside 3D viewport -->
                     <div class="absolute top-2 left-2 pointer-events-none font-mono text-[10px] space-y-1 bg-black/60 p-2 rounded backdrop-blur border border-gray-800">
-                        <div class="text-tactical-accent font-bold flex items-center gap-1.5">
-                            <span class="w-2 h-2 rounded-full bg-tactical-accent animate-ping"></span>
+                        <div class="text-[#00f0ff] font-bold flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-[#00f0ff] animate-ping"></span>
                             SEKTOR: OUTPOST SIGMA-9
                         </div>
                         <div class="text-gray-400">KØRETØJ: BIONISK SCOUT ROVER</div>
@@ -169,72 +162,72 @@
                     </div>
 
                     <!-- 3D Action Prompt Overlay -->
-                    <div id="zoneActionPrompt" class="hidden absolute bottom-3 left-1/2 -translate-x-1/2 bg-tactical-panel/90 border border-tactical-accent px-4 py-2 rounded-full font-mono text-xs text-white shadow-2xl flex items-center gap-2">
-                        <i class="fa-solid fa-hammer text-tactical-accent animate-bounce"></i>
+                    <div id="zoneActionPrompt" class="hidden absolute bottom-3 left-1/2 -translate-x-1/2 bg-[#0c1017]/90 border border-[#00f0ff] px-4 py-2 rounded-full font-mono text-xs text-white shadow-2xl flex items-center gap-2">
+                        <i class="fa-solid fa-hammer text-[#00f0ff] animate-bounce"></i>
                         <span id="zonePromptText">Byg Solcellekuppel [Tryk E]</span>
                     </div>
                 </div>
 
                 <!-- 3D Control Hints & Rover Specs -->
                 <div class="grid grid-cols-3 gap-2 mt-3 text-center text-xs font-mono">
-                    <button onclick="driveRoverForward()" class="bg-tactical-bg hover:bg-tactical-panel border border-tactical-border py-2 rounded text-gray-300 active:text-tactical-accent transition">
+                    <button onclick="driveRoverForward()" class="bg-[#05070a] hover:bg-[#0c1017] border border-[#1a2333] py-2 rounded text-gray-300 active:text-[#00f0ff] transition">
                         <i class="fa-solid fa-arrow-up"></i> Fremad
                     </button>
                     <div class="flex gap-2">
-                        <button onclick="turnRover(-1)" class="flex-1 bg-tactical-bg hover:bg-tactical-panel border border-tactical-border py-2 rounded text-gray-300 active:text-tactical-accent transition">
+                        <button onclick="turnRover(-1)" class="flex-1 bg-[#05070a] hover:bg-[#0c1017] border border-[#1a2333] py-2 rounded text-gray-300 active:text-[#00f0ff] transition">
                             <i class="fa-solid fa-arrow-left"></i>
                         </button>
-                        <button onclick="turnRover(1)" class="flex-1 bg-tactical-bg hover:bg-tactical-panel border border-tactical-border py-2 rounded text-gray-300 active:text-tactical-accent transition">
+                        <button onclick="turnRover(1)" class="flex-1 bg-[#05070a] hover:bg-[#0c1017] border border-[#1a2333] py-2 rounded text-gray-300 active:text-[#00f0ff] transition">
                             <i class="fa-solid fa-arrow-right"></i>
                         </button>
                     </div>
-                    <button onclick="refuelRover()" class="bg-tactical-bg hover:bg-tactical-panel border border-tactical-warn/50 hover:border-tactical-warn py-2 rounded text-tactical-warn font-bold transition flex items-center justify-center gap-1">
+                    <button onclick="refuelRover()" class="bg-[#05070a] hover:bg-[#0c1017] border border-[#ffb703]/50 hover:border-[#ffb703] py-2 rounded text-[#ffb703] font-bold transition flex items-center justify-center gap-1">
                         <i class="fa-solid fa-charging-station"></i> Genoplad (5 Energi)
                     </button>
                 </div>
             </div>
 
             <!-- BASE OPERATIONS & CRAFTING WORKSHOP (SMEDJEN) -->
-            <div class="bg-tactical-panel border border-tactical-border rounded-lg p-5">
-                <div class="flex justify-between items-center border-b border-tactical-border pb-3 mb-4">
-                    <h3 class="text-md font-bold uppercase tracking-wider text-tactical-gold flex items-center gap-2">
+            <div class="bg-[#0c1017] border border-[#1a2333] rounded-lg p-5">
+                <div class="flex justify-between items-center border-b border-[#1a2333] pb-3 mb-4">
+                    <h3 class="text-md font-bold uppercase tracking-wider text-[#ffd166] flex items-center gap-2">
                         <i class="fa-solid fa-screwdriver-wrench"></i>
                         Smedjen & Base Operations
                     </h3>
-                    <span class="text-xs font-mono text-gray-400">BASIS NIVEAU: <span id="baseLevelBadge" class="text-tactical-accent font-bold">MK I</span></span>
+                    <span class="text-xs font-mono text-gray-400">BASIS NIVEAU: <span id="baseLevelBadge" class="text-[#00f0ff] font-bold">MK I</span></span>
                 </div>
 
                 <!-- Resource Bank Display -->
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5 font-mono">
-                    <div class="bg-tactical-bg border border-tactical-border p-2.5 rounded flex items-center gap-3">
-                        <i class="fa-solid fa-cubes text-tactical-accent text-xl"></i>
+                    <div class="bg-[#05070a] border border-[#1a2333] p-2.5 rounded flex items-center gap-3">
+                        <i class="fa-solid fa-cubes text-[#00f0ff] text-xl"></i>
                         <div>
                             <div class="text-[10px] text-gray-400 uppercase">Titanium</div>
                             <div id="resTitanium" class="text-lg font-bold text-white">0</div>
                         </div>
                     </div>
 
-                    <div class="bg-tactical-bg border border-tactical-border p-2.5 rounded flex items-center gap-3">
-                        <i class="fa-solid fa-bolt text-tactical-warn text-xl"></i>
+                    <div class="bg-[#05070a] border border-[#1a2333] p-2.5 rounded flex items-center gap-3">
+                        <i class="fa-solid fa-bolt text-[#ffb703] text-xl"></i>
                         <div>
                             <div class="text-[10px] text-gray-400 uppercase">Energi-Celler</div>
                             <div id="resEnergy" class="text-lg font-bold text-white">0</div>
                         </div>
                     </div>
 
-                    <div class="bg-tactical-bg border border-tactical-border p-2.5 rounded flex items-center gap-3">
-                        <i class="fa-solid fa-microchip text-tactical-success text-xl"></i>
+                    <div class="bg-[#05070a] border border-[#1a2333] p-2.5 rounded flex items-center gap-3">
+                        <i class="fa-solid fa-microchip text-[#00ff66] text-xl"></i>
                         <div>
                             <div class="text-[10px] text-gray-400 uppercase">Elektronik</div>
                             <div id="resElectronics" class="text-lg font-bold text-white">0</div>
                         </div>
                     </div>
 
-                    <div class="bg-tactical-bg border border-tactical-border p-2.5 rounded flex items-center gap-3">
-                        <i class="fa-solid fa-gem text-tactical-purple text-xl"></i>
+                    <div class="bg-[#05070a] border border-[#1a2333] p-2.5 rounded flex items-center gap-3">
+                        <i class="fa-solid fa-gem text-[#b5179e] text-xl"></i>
                         <div>
                             <div class="text-[10px] text-gray-400 uppercase">Data Cores</div>
-                            <div id="resDataCores" class="text-lg font-bold text-tactical-gold">0</div>
+                            <div id="resDataCores" class="text-lg font-bold text-[#ffd166]">0</div>
                         </div>
                     </div>
                 </div>
@@ -244,47 +237,44 @@
                     <div class="text-gray-300 font-bold uppercase tracking-wider text-[11px] mb-1">Byg & Opgrader Faciliteter:</div>
                     
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <!-- Upgrade 1: Radar Satellit -->
-                        <div class="bg-tactical-bg border border-tactical-border p-3 rounded flex flex-col justify-between">
+                        <div class="bg-[#05070a] border border-[#1a2333] p-3 rounded flex flex-col justify-between">
                             <div>
                                 <div class="flex justify-between items-center mb-1">
                                     <span class="font-bold text-white">📡 Langtrækkende Radar</span>
-                                    <span id="lvlRadar" class="text-tactical-accent font-bold">Lvl 1</span>
+                                    <span id="lvlRadar" class="text-[#00f0ff] font-bold">Lvl 1</span>
                                 </div>
                                 <p class="text-[11px] text-gray-400 mb-2 leading-tight">Øger ressource-høst per 250m tilbagelagt med +25%.</p>
-                                <div class="text-[10px] text-tactical-warn mb-3">Pris: 40 Titanium • 20 Energi</div>
+                                <div class="text-[10px] text-[#ffb703] mb-3">Pris: 40 Titanium • 20 Energi</div>
                             </div>
-                            <button onclick="upgradeFacility('radar')" class="w-full py-1.5 bg-tactical-panel border border-tactical-accent hover:bg-tactical-accent hover:text-black text-tactical-accent font-bold rounded uppercase transition">
+                            <button onclick="upgradeFacility('radar')" class="w-full py-1.5 bg-[#0c1017] border border-[#00f0ff] hover:bg-[#00f0ff] hover:text-black text-[#00f0ff] font-bold rounded uppercase transition">
                                 Opgrader
                             </button>
                         </div>
 
-                        <!-- Upgrade 2: Exoskeleton Støvler -->
-                        <div class="bg-tactical-bg border border-tactical-border p-3 rounded flex flex-col justify-between">
+                        <div class="bg-[#05070a] border border-[#1a2333] p-3 rounded flex flex-col justify-between">
                             <div>
                                 <div class="flex justify-between items-center mb-1">
                                     <span class="font-bold text-white">🦿 Bioniske Støvler</span>
-                                    <span id="lvlBoots" class="text-tactical-accent font-bold">Lvl 1</span>
+                                    <span id="lvlBoots" class="text-[#00f0ff] font-bold">Lvl 1</span>
                                 </div>
                                 <p class="text-[11px] text-gray-400 mb-2 leading-tight">Giver Data Core bonus, når løberen holder over 9.0 km/t.</p>
-                                <div class="text-[10px] text-tactical-warn mb-3">Pris: 35 Elektronik • 30 Titanium</div>
+                                <div class="text-[10px] text-[#ffb703] mb-3">Pris: 35 Elektronik • 30 Titanium</div>
                             </div>
-                            <button onclick="upgradeFacility('boots')" class="w-full py-1.5 bg-tactical-panel border border-tactical-accent hover:bg-tactical-accent hover:text-black text-tactical-accent font-bold rounded uppercase transition">
+                            <button onclick="upgradeFacility('boots')" class="w-full py-1.5 bg-[#0c1017] border border-[#00f0ff] hover:bg-[#00f0ff] hover:text-black text-[#00f0ff] font-bold rounded uppercase transition">
                                 Opgrader
                             </button>
                         </div>
 
-                        <!-- Upgrade 3: Forsvarstårn -->
-                        <div class="bg-tactical-bg border border-tactical-border p-3 rounded flex flex-col justify-between">
+                        <div class="bg-[#05070a] border border-[#1a2333] p-3 rounded flex flex-col justify-between">
                             <div>
                                 <div class="flex justify-between items-center mb-1">
                                     <span class="font-bold text-white">🛡️ Forsvarsperimeter</span>
-                                    <span id="lvlDefense" class="text-tactical-accent font-bold">Lvl 1</span>
+                                    <span id="lvlDefense" class="text-[#00f0ff] font-bold">Lvl 1</span>
                                 </div>
                                 <p class="text-[11px] text-gray-400 mb-2 leading-tight">Beskytter basens lagre mod bagholdsangreb under missionen.</p>
-                                <div class="text-[10px] text-tactical-warn mb-3">Pris: 50 Energi • 2 Data Cores</div>
+                                <div class="text-[10px] text-[#ffb703] mb-3">Pris: 50 Energi • 2 Data Cores</div>
                             </div>
-                            <button onclick="upgradeFacility('defense')" class="w-full py-1.5 bg-tactical-panel border border-tactical-accent hover:bg-tactical-accent hover:text-black text-tactical-accent font-bold rounded uppercase transition">
+                            <button onclick="upgradeFacility('defense')" class="w-full py-1.5 bg-[#0c1017] border border-[#00f0ff] hover:bg-[#00f0ff] hover:text-black text-[#00f0ff] font-bold rounded uppercase transition">
                                 Opgrader
                             </button>
                         </div>
@@ -292,35 +282,35 @@
                 </div>
             </div>
 
-            <!-- Mission Tactical Cue Controls -->
-            <div class="bg-tactical-panel border border-tactical-border rounded-lg p-5">
+            <!-- Tactical Voice Controls -->
+            <div class="bg-[#0c1017] border border-[#1a2333] rounded-lg p-5">
                 <h3 class="text-md font-bold uppercase tracking-wider text-gray-300 mb-3 flex items-center gap-2">
-                    <i class="fa-solid fa-bullhorn text-tactical-accent"></i>
+                    <i class="fa-solid fa-bullhorn text-[#00f0ff]"></i>
                     Send Taktisk TTS Lydordre til Høretelefoner
                 </h3>
                 
                 <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-4">
-                    <button onclick="triggerVoiceCue('ambush')" class="px-3 py-2 bg-tactical-bg border border-tactical-danger/60 hover:border-tactical-danger hover:bg-tactical-danger/10 text-tactical-danger rounded text-xs font-mono text-left transition flex items-center justify-between">
+                    <button onclick="triggerVoiceCue('ambush')" class="px-3 py-2 bg-[#05070a] border border-[#ff0055]/60 hover:border-[#ff0055] hover:bg-[#ff0055]/10 text-[#ff0055] rounded text-xs font-mono text-left transition flex items-center justify-between">
                         <span>🚨 Bagholdsangreb! (Løb)</span>
                         <i class="fa-solid fa-play"></i>
                     </button>
-                    <button onclick="triggerVoiceCue('stealth')" class="px-3 py-2 bg-tactical-bg border border-tactical-warn/60 hover:border-tactical-warn hover:bg-tactical-warn/10 text-tactical-warn rounded text-xs font-mono text-left transition flex items-center justify-between">
+                    <button onclick="triggerVoiceCue('stealth')" class="px-3 py-2 bg-[#05070a] border border-[#ffb703]/60 hover:border-[#ffb703] hover:bg-[#ffb703]/10 text-[#ffb703] rounded text-xs font-mono text-left transition flex items-center justify-between">
                         <span>🤫 Snigeruter (Sænk fart)</span>
                         <i class="fa-solid fa-play"></i>
                     </button>
-                    <button onclick="triggerVoiceCue('loot')" class="px-3 py-2 bg-tactical-bg border border-tactical-success/60 hover:border-tactical-success hover:bg-tactical-success/10 text-tactical-success rounded text-xs font-mono text-left transition flex items-center justify-between">
+                    <button onclick="triggerVoiceCue('loot')" class="px-3 py-2 bg-[#05070a] border border-[#00ff66]/60 hover:border-[#00ff66] hover:bg-[#00ff66]/10 text-[#00ff66] rounded text-xs font-mono text-left transition flex items-center justify-between">
                         <span>💎 Ressource Sikret</span>
                         <i class="fa-solid fa-play"></i>
                     </button>
-                    <button onclick="triggerVoiceCue('status')" class="px-3 py-2 bg-tactical-bg border border-tactical-accent/60 hover:border-tactical-accent hover:bg-tactical-accent/10 text-tactical-accent rounded text-xs font-mono text-left transition flex items-center justify-between">
+                    <button onclick="triggerVoiceCue('status')" class="px-3 py-2 bg-[#05070a] border border-[#00f0ff]/60 hover:border-[#00f0ff] hover:bg-[#00f0ff]/10 text-[#00f0ff] rounded text-xs font-mono text-left transition flex items-center justify-between">
                         <span>📡 Status Rapport</span>
                         <i class="fa-solid fa-play"></i>
                     </button>
-                    <button onclick="triggerVoiceCue('patrol')" class="px-3 py-2 bg-tactical-bg border border-gray-700 hover:border-gray-500 rounded text-xs font-mono text-left text-gray-300 transition flex items-center justify-between">
+                    <button onclick="triggerVoiceCue('patrol')" class="px-3 py-2 bg-[#05070a] border border-gray-700 hover:border-gray-500 rounded text-xs font-mono text-left text-gray-300 transition flex items-center justify-between">
                         <span>⚠️ Drone Patrulje</span>
                         <i class="fa-solid fa-play"></i>
                     </button>
-                    <button onclick="triggerVoiceCue('completed')" class="px-3 py-2 bg-tactical-bg border border-tactical-success/80 text-tactical-success rounded text-xs font-mono text-left transition flex items-center justify-between">
+                    <button onclick="triggerVoiceCue('completed')" class="px-3 py-2 bg-[#05070a] border border-[#00ff66]/80 text-[#00ff66] rounded text-xs font-mono text-left transition flex items-center justify-between">
                         <span>🏆 Mission Gennemført</span>
                         <i class="fa-solid fa-play"></i>
                     </button>
@@ -328,23 +318,23 @@
 
                 <!-- Custom Order input -->
                 <div class="flex gap-2">
-                    <input id="customTtsInput" type="text" placeholder="Skriv brugerdefineret stemmeordre..." class="flex-1 bg-tactical-bg border border-tactical-border px-3 py-2 text-sm font-mono rounded focus:outline-none focus:border-tactical-accent text-white">
-                    <button onclick="sendCustomTts()" class="px-4 py-2 bg-tactical-accent hover:bg-cyan-400 text-black font-bold font-mono rounded text-xs transition uppercase">
+                    <input id="customTtsInput" type="text" placeholder="Skriv brugerdefineret stemmeordre..." class="flex-1 bg-[#05070a] border border-[#1a2333] px-3 py-2 text-sm font-mono rounded focus:outline-none focus:border-[#00f0ff] text-white">
+                    <button onclick="sendCustomTts()" class="px-4 py-2 bg-[#00f0ff] hover:bg-cyan-400 text-black font-bold font-mono rounded text-xs transition uppercase">
                         Send Tale
                     </button>
                 </div>
             </div>
 
-            <!-- Live Mission Narrative Event Log -->
-            <div class="bg-tactical-panel border border-tactical-border rounded-lg p-5 flex-1 flex flex-col min-h-[220px]">
+            <!-- Event Log -->
+            <div class="bg-[#0c1017] border border-[#1a2333] rounded-lg p-5 flex-1 flex flex-col min-h-[220px]">
                 <div class="flex justify-between items-center mb-3">
                     <h3 class="text-md font-bold uppercase tracking-wider text-gray-300 flex items-center gap-2">
-                        <i class="fa-solid fa-terminal text-tactical-accent"></i>
+                        <i class="fa-solid fa-terminal text-[#00f0ff]"></i>
                         Taktisk Hændelseslog & Historiefortælling
                     </h3>
                     <span class="text-xs font-mono text-gray-500">LIVE FEED</span>
                 </div>
-                <div id="missionLog" class="flex-1 bg-tactical-bg border border-tactical-border p-3 rounded font-mono text-xs overflow-y-auto max-h-56 space-y-2">
+                <div id="missionLog" class="flex-1 bg-[#05070a] border border-[#1a2333] p-3 rounded font-mono text-xs overflow-y-auto max-h-56 space-y-2">
                     <div class="text-gray-500">[00:00:00] Venter på at Felt-Enheden aktiveres og opretter forbindelse...</div>
                 </div>
             </div>
@@ -355,9 +345,9 @@
         <div class="lg:col-span-5 flex flex-col space-y-6">
             
             <!-- Cloud Link / QR Code -->
-            <div class="bg-tactical-panel border border-tactical-border rounded-lg p-5 text-center flex flex-col items-center">
+            <div class="bg-[#0c1017] border border-[#1a2333] rounded-lg p-5 text-center flex flex-col items-center">
                 <div class="flex items-center space-x-2 mb-2">
-                    <i class="fa-solid fa-tower-broadcast text-tactical-accent"></i>
+                    <i class="fa-solid fa-tower-broadcast text-[#00f0ff]"></i>
                     <h3 class="text-lg font-bold uppercase tracking-wider text-white">WebRTC Datalink (Mobil 5G / Wi-Fi)</h3>
                 </div>
                 
@@ -372,30 +362,30 @@
                     </div>
                 </div>
 
-                <div class="mt-3 w-full bg-tactical-bg border border-tactical-border p-2 rounded text-left font-mono text-xs flex justify-between items-center">
+                <div class="mt-3 w-full bg-[#05070a] border border-[#1a2333] p-2 rounded text-left font-mono text-xs flex justify-between items-center">
                     <span class="text-gray-400">PIN-kode til session:</span>
-                    <span id="sessionPinCode" class="text-tactical-accent font-bold text-lg tracking-widest">----</span>
+                    <span id="sessionPinCode" class="text-[#00f0ff] font-bold text-lg tracking-widest">----</span>
                 </div>
 
-                <div class="mt-3 p-2 bg-tactical-bg border border-tactical-border rounded w-full flex items-center justify-between text-xs font-mono">
+                <div class="mt-3 p-2 bg-[#05070a] border border-[#1a2333] rounded w-full flex items-center justify-between text-xs font-mono">
                     <div class="flex items-center gap-2">
-                        <span id="qrStatusDot" class="w-2.5 h-2.5 rounded-full bg-tactical-warn animate-pulse"></span>
+                        <span id="qrStatusDot" class="w-2.5 h-2.5 rounded-full bg-[#ffb703] animate-pulse"></span>
                         <span id="qrStatusText" class="text-gray-300">Venter på mobil...</span>
                     </div>
                 </div>
             </div>
 
             <!-- Procedurel Mission & Historie Setup -->
-            <div class="bg-tactical-panel border border-tactical-border rounded-lg p-5">
+            <div class="bg-[#0c1017] border border-[#1a2333] rounded-lg p-5">
                 <h3 class="text-md font-bold uppercase tracking-wider text-white mb-3 flex items-center gap-2">
-                    <i class="fa-solid fa-book-journal-whills text-tactical-accent"></i>
+                    <i class="fa-solid fa-book-journal-whills text-[#00f0ff]"></i>
                     Procedurel Historie Generator
                 </h3>
 
                 <div class="space-y-3 font-mono text-xs">
                     <div>
                         <label class="block text-gray-400 mb-1">Missions-Tema:</label>
-                        <select id="missionTypeSelect" class="w-full bg-tactical-bg border border-tactical-border p-2 rounded text-white focus:outline-none focus:border-tactical-accent">
+                        <select id="missionTypeSelect" class="w-full bg-[#05070a] border border-[#1a2333] p-2 rounded text-white focus:outline-none focus:border-[#00f0ff]">
                             <option value="recon">Recon / Rekognoscering i Forbudt Zone</option>
                             <option value="scavenge">Råstof Ekstraktion & Bjærgning</option>
                             <option value="escape">Flugt fra Bio-Mech Zombier & Droner</option>
@@ -406,9 +396,9 @@
                     <div>
                         <div class="flex justify-between text-gray-400 mb-1">
                             <span>Vælg Din Gå/Løbe Distance:</span>
-                            <span id="distTargetLabel" class="text-tactical-accent font-bold">5.0 km</span>
+                            <span id="distTargetLabel" class="text-[#00f0ff] font-bold">5.0 km</span>
                         </div>
-                        <input id="distTargetSlider" type="range" min="1.0" max="15.0" step="0.5" value="5.0" class="w-full accent-tactical-accent">
+                        <input id="distTargetSlider" type="range" min="1.0" max="15.0" step="0.5" value="5.0" class="w-full accent-[#00f0ff]">
                         <div class="flex justify-between text-[10px] text-gray-500 mt-0.5">
                             <span>1 km (Hurtig tur)</span>
                             <span>5 km (Klassisk)</span>
@@ -434,56 +424,53 @@
     <main id="mobileView" class="view-hidden flex-1 p-4 flex-col justify-between max-w-md mx-auto w-full">
         
         <!-- Mobile Header Bar -->
-        <div class="flex items-center justify-between border-b border-tactical-border pb-3">
+        <div class="flex items-center justify-between border-b border-[#1a2333] pb-3">
             <div class="flex items-center space-x-2">
-                <span id="mobPulseDot" class="w-3 h-3 rounded-full bg-tactical-warn"></span>
-                <span class="font-mono text-sm tracking-widest text-tactical-accent font-bold uppercase">FIELD SENSOR</span>
+                <span id="mobPulseDot" class="w-3 h-3 rounded-full bg-[#ffb703]"></span>
+                <span class="font-mono text-sm tracking-widest text-[#00f0ff] font-bold uppercase">FIELD SENSOR</span>
             </div>
             <div class="flex items-center space-x-2">
-                <button id="ttsMuteBtn" onclick="toggleMute()" class="w-8 h-8 rounded border border-gray-700 bg-tactical-panel flex items-center justify-center text-tactical-accent text-sm">
+                <button id="ttsMuteBtn" onclick="toggleMute()" class="w-8 h-8 rounded border border-gray-700 bg-[#0c1017] flex items-center justify-center text-[#00f0ff] text-sm">
                     <i id="muteIcon" class="fa-solid fa-volume-high"></i>
                 </button>
-                <span id="mobileLinkBadge" class="text-[10px] font-mono px-2 py-0.5 rounded bg-gray-900 border border-tactical-warn text-tactical-warn">
+                <span id="mobileLinkBadge" class="text-[10px] font-mono px-2 py-0.5 rounded bg-gray-900 border border-[#ffb703] text-[#ffb703]">
                     IKKE FORBUNDET
                 </span>
             </div>
         </div>
 
         <!-- PIN Connection Bar -->
-        <div id="mobPinBar" class="bg-tactical-panel border border-tactical-border p-2.5 rounded my-2 flex gap-2 items-center text-xs font-mono">
+        <div id="mobPinBar" class="bg-[#0c1017] border border-[#1a2333] p-2.5 rounded my-2 flex gap-2 items-center text-xs font-mono">
             <span class="text-gray-400">PIN:</span>
-            <input id="mobPinInput" type="text" placeholder="PIN" class="w-24 bg-tactical-bg border border-gray-700 px-2 py-1 rounded text-white text-center font-bold tracking-widest">
-            <button id="mobConnectBtn" onclick="connectToHostWithPin()" class="flex-1 py-1 bg-tactical-accent hover:bg-cyan-400 text-black font-bold rounded uppercase">
+            <input id="mobPinInput" type="text" placeholder="PIN" class="w-24 bg-[#05070a] border border-gray-700 px-2 py-1 rounded text-white text-center font-bold tracking-widest">
+            <button id="mobConnectBtn" onclick="connectToHostWithPin()" class="flex-1 py-1 bg-[#00f0ff] hover:bg-cyan-400 text-black font-bold rounded uppercase">
                 Kobl På
             </button>
         </div>
 
         <!-- Active Story Mission Banner (Mobile) -->
-        <div class="bg-tactical-panel border border-tactical-accent/40 rounded p-2.5 my-1 font-mono text-xs">
+        <div class="bg-[#0c1017] border border-[#00f0ff]/40 rounded p-2.5 my-1 font-mono text-xs">
             <div class="flex justify-between items-center mb-1">
-                <span class="text-tactical-accent font-bold uppercase">Aktiv Mission:</span>
+                <span class="text-[#00f0ff] font-bold uppercase">Aktiv Mission:</span>
                 <span id="mobTargetDist" class="text-white font-bold">5.0 km</span>
             </div>
-            <div id="mobStoryTitle" class="text-tactical-gold font-bold truncate">Initialiserer...</div>
-            <div class="w-full bg-tactical-bg border border-tactical-border h-2 rounded-full overflow-hidden mt-1.5 p-0.5">
-                <div id="mobProgressBar" class="h-full bg-gradient-to-r from-tactical-accent to-tactical-success w-0 rounded-full transition-all duration-300"></div>
+            <div id="mobStoryTitle" class="text-[#ffd166] font-bold truncate">Initialiserer...</div>
+            <div class="w-full bg-[#05070a] border border-[#1a2333] h-2 rounded-full overflow-hidden mt-1.5 p-0.5">
+                <div id="mobProgressBar" class="h-full bg-gradient-to-r from-[#00f0ff] to-[#00ff66] w-0 rounded-full transition-all duration-300"></div>
             </div>
         </div>
 
         <!-- Primary High-Contrast AMOLED Display -->
         <div class="my-auto py-3 space-y-4 text-center">
-            
-            <!-- Speed Display -->
             <div>
                 <div class="text-xs font-mono text-gray-400 tracking-widest uppercase mb-1">AKTUEL HASTIGHED</div>
                 <div id="mobSpeedVal" class="text-7xl font-mono font-bold text-white tracking-tighter glow-accent">
                     0.0
                 </div>
-                <div class="text-sm font-mono text-tactical-accent font-bold tracking-widest mt-1">KM/T</div>
+                <div class="text-sm font-mono text-[#00f0ff] font-bold tracking-widest mt-1">KM/T</div>
             </div>
 
-            <!-- Secondary Telemetry Row -->
-            <div class="grid grid-cols-2 gap-4 pt-3 border-t border-b border-tactical-border/70 py-3">
+            <div class="grid grid-cols-2 gap-4 pt-3 border-t border-b border-[#1a2333]/70 py-3">
                 <div>
                     <div class="text-xs font-mono text-gray-400 uppercase">Distance</div>
                     <div id="mobDistVal" class="text-4xl font-mono font-bold text-white">0.00</div>
@@ -491,14 +478,13 @@
                 </div>
                 <div>
                     <div class="text-xs font-mono text-gray-400 uppercase">Tempo</div>
-                    <div id="mobPaceVal" class="text-4xl font-mono font-bold text-tactical-warn">0'00"</div>
+                    <div id="mobPaceVal" class="text-4xl font-mono font-bold text-[#ffb703]">0'00"</div>
                     <div class="text-xs font-mono text-gray-500">MIN/KM</div>
                 </div>
             </div>
 
-            <!-- Audio Transmission Status banner -->
-            <div class="bg-tactical-panel border border-tactical-border/90 p-3 rounded-lg text-left">
-                <div class="text-[10px] font-mono text-tactical-accent uppercase flex items-center gap-1.5 mb-1">
+            <div class="bg-[#0c1017] border border-[#1a2333]/90 p-3 rounded-lg text-left">
+                <div class="text-[10px] font-mono text-[#00f0ff] uppercase flex items-center gap-1.5 mb-1">
                     <i class="fa-solid fa-radio animate-pulse"></i>
                     <span>Historie Lydordre i Headset:</span>
                 </div>
@@ -506,60 +492,53 @@
                     "Tænd GPS'en for at modtage din missions-briefing..."
                 </div>
             </div>
-
         </div>
 
-        <!-- Sensor Activation & Simulation Controls -->
+        <!-- Controls -->
         <div class="space-y-3 font-mono">
-            
-            <!-- GPS Activation Button -->
-            <button id="gpsToggleBtn" onclick="toggleGpsTracking()" class="w-full py-4 bg-tactical-panel border-2 border-tactical-accent hover:bg-tactical-accent hover:text-black text-tactical-accent font-bold rounded-lg uppercase tracking-wider text-sm transition shadow-lg flex items-center justify-center gap-2">
+            <button id="gpsToggleBtn" onclick="toggleGpsTracking()" class="w-full py-4 bg-[#0c1017] border-2 border-[#00f0ff] hover:bg-[#00f0ff] hover:text-black text-[#00f0ff] font-bold rounded-lg uppercase tracking-wider text-sm transition shadow-lg flex items-center justify-center gap-2">
                 <i id="gpsIcon" class="fa-solid fa-location-crosshairs text-lg"></i>
                 <span id="gpsBtnText">Start Real GPS Tracking</span>
             </button>
 
-            <!-- Test Simulator Drawer -->
-            <div class="bg-tactical-panel border border-tactical-border rounded-lg p-3 text-xs">
+            <div class="bg-[#0c1017] border border-[#1a2333] rounded-lg p-3 text-xs">
                 <div class="flex justify-between items-center mb-2">
                     <span class="text-gray-400 uppercase font-bold">Simulator (Styr farten manuelt):</span>
-                    <span id="simSpeedDisplay" class="text-tactical-accent font-mono font-bold">0.0 km/t</span>
+                    <span id="simSpeedDisplay" class="text-[#00f0ff] font-mono font-bold">0.0 km/t</span>
                 </div>
-                <input id="simSpeedSlider" type="range" min="0" max="18" step="0.5" value="0" class="w-full accent-tactical-accent mb-2">
+                <input id="simSpeedSlider" type="range" min="0" max="18" step="0.5" value="0" class="w-full accent-[#00f0ff] mb-2">
                 <div class="flex gap-2">
-                    <button onclick="setSimSpeed(0)" class="flex-1 py-1 bg-tactical-bg border border-gray-700 rounded text-gray-300">Stop (0)</button>
-                    <button onclick="setSimSpeed(5.5)" class="flex-1 py-1 bg-tactical-bg border border-gray-700 rounded text-gray-300">Gå (5.5)</button>
-                    <button onclick="setSimSpeed(10.5)" class="flex-1 py-1 bg-tactical-bg border border-gray-700 rounded text-gray-300">Løb (10.5)</button>
+                    <button onclick="setSimSpeed(0)" class="flex-1 py-1 bg-[#05070a] border border-gray-700 rounded text-gray-300">Stop (0)</button>
+                    <button onclick="setSimSpeed(5.5)" class="flex-1 py-1 bg-[#05070a] border border-gray-700 rounded text-gray-300">Gå (5.5)</button>
+                    <button onclick="setSimSpeed(10.5)" class="flex-1 py-1 bg-[#05070a] border border-gray-700 rounded text-gray-300">Løb (10.5)</button>
                 </div>
             </div>
-
         </div>
 
     </main>
 
     <!-- FOOTER BAR -->
-    <footer class="w-full bg-tactical-panel border-t border-tactical-border px-4 py-2 text-center text-xs font-mono text-gray-500">
+    <footer class="w-full bg-[#0c1017] border-t border-[#1a2333] px-4 py-2 text-center text-xs font-mono text-gray-500">
         <span>AEGIS TACTICAL PROTOCOL • WEBRTC LIVE DATALINK • BASE OPS SYSTEM</span>
     </footer>
 
 </div>
 
-<!-- SCRIPT & ENGINE -->
+<!-- MAIN ENGINE SCRIPT -->
 <script>
     const state = {
-        role: 'host', // 'host' or 'field'
+        role: 'host',
         pin: '',
         peer: null,
         conn: null,
         connected: false,
         
-        // Telemetry
         speed: 0.0,
         distance: 0.0,
         pace: "0'00\"",
         durationSeconds: 0,
         timerInterval: null,
         
-        // Objective & Story state
         targetDistance: 5.0,
         objectiveName: "Operation Dark Horizon",
         missionType: "recon",
@@ -567,7 +546,6 @@
         currentStory: null,
         lastHarvestDistance: 0.0,
         
-        // Base Building Resources (Persisted locally on PC)
         resources: {
             titanium: 15,
             energy: 20,
@@ -580,25 +558,19 @@
             defense: 1
         },
         
-        // GPS state
         gpsWatchId: null,
         lastCoords: null,
         lastTimestamp: null,
         gpsActive: false,
         
-        // Simulator state
         simInterval: null,
         simSpeed: 0.0,
         
-        // Speech
         ttsMuted: false,
         lastVoiceMessage: "",
         wakeLock: null
     };
 
-    /* ==========================================================================
-       PROCEDURAL SCI-FI STORY NARRATIVE GENERATOR
-       ========================================================================== */
     const storyDatabase = {
         recon: [
             {
@@ -675,7 +647,6 @@
         const params = new URLSearchParams(window.location.search);
         const targetPin = params.get('pin');
         const requestedRole = params.get('role');
-        
         const isMobileBrowser = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || window.innerWidth < 768;
 
         if (targetPin || requestedRole === 'field' || isMobileBrowser) {
@@ -692,21 +663,16 @@
 
         setupUIEventListeners();
         renderBaseResources();
-        deployNewMission(); // Generate initial random story
+        deployNewMission();
     });
 
-    /* ==========================================================================
-       BASE OPERATIONS, INVENTORY & CRAFTING
-       ========================================================================== */
     function loadBaseGameData() {
         try {
             const savedRes = localStorage.getItem('aegis_base_resources');
             const savedFac = localStorage.getItem('aegis_base_facilities');
             if (savedRes) state.resources = Object.assign(state.resources, JSON.parse(savedRes));
             if (savedFac) state.facilities = Object.assign(state.facilities, JSON.parse(savedFac));
-        } catch(e) {
-            console.log("Ingen gemt data fundet, initialiserer ny base.");
-        }
+        } catch(e) {}
     }
 
     function saveBaseGameData() {
@@ -734,7 +700,6 @@
         if (lBoo) lBoo.innerText = `Lvl ${state.facilities.boots}`;
         if (lDef) lDef.innerText = `Lvl ${state.facilities.defense}`;
 
-        // Calculate Base Mk Level
         const totalLevels = state.facilities.radar + state.facilities.boots + state.facilities.defense;
         const badge = document.getElementById('baseLevelBadge');
         if (badge) {
@@ -748,7 +713,6 @@
         const delta = currentDistance - state.lastHarvestDistance;
         if (delta >= 0.25) {
             state.lastHarvestDistance = currentDistance;
-            
             const radarMultiplier = 1 + ((state.facilities.radar - 1) * 0.25);
             
             let titYield = Math.round((5 + Math.floor(Math.random() * 5)) * radarMultiplier);
@@ -758,9 +722,7 @@
 
             if (currentSpeed >= 9.0) {
                 titYield += 4;
-                if (Math.random() < 0.4 * state.facilities.boots) {
-                    coreYield += 1;
-                }
+                if (Math.random() < 0.4 * state.facilities.boots) coreYield += 1;
             }
 
             if (state.missionType === 'scavenge') {
@@ -794,10 +756,10 @@
                 state.facilities.radar++;
                 saveBaseGameData();
                 renderBaseResources();
-                logMissionEvent(`🛠️ VÆRKSTED: Radar opgraderet til Lvl ${state.facilities.radar}! Rækkevidde forøget.`);
-                dispatchAudioCue("Basens radar opgraderet til næste niveau.");
+                logMissionEvent(`🛠️ VÆRKSTED: Radar opgraderet til Lvl ${state.facilities.radar}!`);
+                dispatchAudioCue("Basens radar opgraderet.");
             } else {
-                alert(`Ikke nok ressourcer! Kræver ${costTit} Titanium og ${costNrg} Energi.`);
+                alert(`Mangler ressourcer! Kræver ${costTit} Titanium og ${costNrg} Energi.`);
             }
         } else if (type === 'boots') {
             const costEle = 35 * state.facilities.boots;
@@ -809,9 +771,9 @@
                 saveBaseGameData();
                 renderBaseResources();
                 logMissionEvent(`🛠️ VÆRKSTED: Bioniske Støvler opgraderet til Lvl ${state.facilities.boots}!`);
-                dispatchAudioCue("Operative exoskelet-støvler opgraderet.");
+                dispatchAudioCue("Bioniske støvler opgraderet.");
             } else {
-                alert(`Ikke nok ressourcer! Kræver ${costEle} Elektronik og ${costTit} Titanium.`);
+                alert(`Mangler ressourcer! Kræver ${costEle} Elektronik og ${costTit} Titanium.`);
             }
         } else if (type === 'defense') {
             const costNrg = 50 * state.facilities.defense;
@@ -823,16 +785,13 @@
                 saveBaseGameData();
                 renderBaseResources();
                 logMissionEvent(`🛠️ VÆRKSTED: Forsvarsperimeter forstærket til Lvl ${state.facilities.defense}!`);
-                dispatchAudioCue("Basens perimeter-skjolde forstærket.");
+                dispatchAudioCue("Basens forsvarsskærm forstærket.");
             } else {
-                alert(`Ikke nok ressourcer! Kræver ${costNrg} Energi og ${costCore} Data Cores.`);
+                alert(`Mangler ressourcer! Kræver ${costNrg} Energi og ${costCore} Data Cores.`);
             }
         }
     }
 
-    /* ==========================================================================
-       ROLES & VIEW SWITCHER
-       ========================================================================== */
     function setRole(newRole) {
         state.role = newRole;
         const hostView = document.getElementById('hostView');
@@ -846,17 +805,15 @@
             
             toggleRoleBtn.innerText = "SKIFT TIL MOBIL VISNING";
             systemModeBadge.innerText = "HOST COMMAND [PC]";
-            systemModeBadge.className = "text-tactical-accent font-bold";
-            if (!state.peer) {
-                initHostPeer();
-            }
+            systemModeBadge.className = "text-[#00f0ff] font-bold";
+            if (!state.peer) initHostPeer();
         } else {
             hostView.className = "view-hidden flex-1 p-4 md:p-6 grid-cols-1 lg:grid-cols-12 gap-6 max-w-7xl mx-auto w-full";
             mobileView.className = "view-active-flex flex-1 p-4 flex-col justify-between max-w-md mx-auto w-full";
             
             toggleRoleBtn.innerText = "SKIFT TIL PC HOST";
             systemModeBadge.innerText = "FIELD UNIT [MOBILE]";
-            systemModeBadge.className = "text-tactical-success font-bold";
+            systemModeBadge.className = "text-[#00ff66] font-bold";
             initFieldPeer();
             requestWakeLock();
         }
@@ -866,15 +823,10 @@
         if ('wakeLock' in navigator) {
             try {
                 state.wakeLock = await navigator.wakeLock.request('screen');
-            } catch (e) {
-                console.log("WakeLock:", e.message);
-            }
+            } catch (e) {}
         }
     }
 
-    /* ==========================================================================
-       WEBRTC NETWORKING (PEERJS)
-       ========================================================================== */
     function getPeerIdForPin(pin) {
         return `aegis-runner-host-${pin}`;
     }
@@ -903,7 +855,6 @@
         });
 
         state.peer.on('error', (err) => {
-            console.warn("Peer error:", err);
             if (err.type === 'unavailable-id') {
                 state.peer = null;
                 initHostPeer();
@@ -918,7 +869,7 @@
             const badge = document.getElementById('mobileLinkBadge');
             if (badge && !state.connected) {
                 badge.innerText = "KLAR TIL FORBINDELSE";
-                badge.className = "text-[10px] font-mono px-2 py-0.5 rounded bg-gray-900 border border-tactical-accent text-tactical-accent";
+                badge.className = "text-[10px] font-mono px-2 py-0.5 rounded bg-gray-900 border border-[#00f0ff] text-[#00f0ff]";
             }
         });
     }
@@ -932,14 +883,12 @@
         
         if (badge) {
             badge.innerText = "OPRETTER FORBINDELSE...";
-            badge.className = "text-[10px] font-mono px-2 py-0.5 rounded bg-gray-900 border border-tactical-warn text-tactical-warn";
+            badge.className = "text-[10px] font-mono px-2 py-0.5 rounded bg-gray-900 border border-[#ffb703] text-[#ffb703]";
         }
 
         if (!state.peer) {
             state.peer = new Peer(null, { debug: 1 });
-            state.peer.on('open', () => {
-                dialHost(targetHostId);
-            });
+            state.peer.on('open', () => dialHost(targetHostId));
         } else {
             dialHost(targetHostId);
         }
@@ -949,7 +898,6 @@
         if (state.conn) {
             try { state.conn.close(); } catch(e){}
         }
-
         state.conn = state.peer.connect(targetHostId, { reliable: true });
         setupConnectionHandlers();
     }
@@ -971,9 +919,9 @@
                 const dot = document.getElementById('mobPulseDot');
                 if (badge) {
                     badge.innerText = "FORBUNDET";
-                    badge.className = "text-[10px] font-mono px-2 py-0.5 rounded bg-gray-900 border border-tactical-success text-tactical-success";
+                    badge.className = "text-[10px] font-mono px-2 py-0.5 rounded bg-gray-900 border border-[#00ff66] text-[#00ff66]";
                 }
-                if (dot) dot.className = "w-3 h-3 rounded-full bg-tactical-success animate-ping";
+                if (dot) dot.className = "w-3 h-3 rounded-full bg-[#00ff66] animate-ping";
                 speakVoice("Forbindelse til PC bekræftet. Venter på GPS aktivering.");
             }
         });
@@ -991,7 +939,7 @@
                 const badge = document.getElementById('mobileLinkBadge');
                 if (badge) {
                     badge.innerText = "AFBRUDT";
-                    badge.className = "text-[10px] font-mono px-2 py-0.5 rounded bg-gray-900 border border-tactical-danger text-tactical-danger";
+                    badge.className = "text-[10px] font-mono px-2 py-0.5 rounded bg-gray-900 border border-[#ff0055] text-[#ff0055]";
                 }
             }
         });
@@ -1006,9 +954,7 @@
                 payload: payload,
                 timestamp: Date.now()
             });
-        } catch (e) {
-            console.warn("Datalink send fejl:", e);
-        }
+        } catch (e){}
     }
 
     function handleIncomingPacket(packet) {
@@ -1044,7 +990,7 @@
 
             case 'GPS_STARTED':
                 if (state.role === 'host' && state.currentStory) {
-                    logMissionEvent(`🚀 MISSION STARTET AF LØBER: "${state.currentStory.title}"`);
+                    logMissionEvent(`🚀 MISSION STARTET: "${state.currentStory.title}"`);
                     dispatchAudioCue(state.currentStory.briefing);
                 }
                 break;
@@ -1056,10 +1002,10 @@
         const qrStatusText = document.getElementById('qrStatusText');
         const hostPulse = document.getElementById('hostPulseDot');
         if (qrStatusDot && qrStatusText) {
-            qrStatusDot.className = "w-2.5 h-2.5 rounded-full bg-tactical-success";
+            qrStatusDot.className = "w-2.5 h-2.5 rounded-full bg-[#00ff66]";
             qrStatusText.innerText = "Mobil Forbundet!";
         }
-        if (hostPulse) hostPulse.className = "w-2.5 h-2.5 rounded-full bg-tactical-success animate-ping";
+        if (hostPulse) hostPulse.className = "w-2.5 h-2.5 rounded-full bg-[#00ff66] animate-ping";
     }
 
     function renderQrCode(pin) {
@@ -1080,13 +1026,10 @@
                 correctLevel: QRCode.CorrectLevel.M
             });
         } catch (err) {
-            qrContainer.innerHTML = `<span class="text-xs font-mono text-tactical-accent">PIN: ${pin}</span>`;
+            qrContainer.innerHTML = `<span class="text-xs font-mono text-[#00f0ff]">PIN: ${pin}</span>`;
         }
     }
 
-    /* ==========================================================================
-       TELEMETRY, SENSORS & GPS ENGINE
-       ========================================================================== */
     function toggleGpsTracking() {
         const btnText = document.getElementById('gpsBtnText');
         const gpsIcon = document.getElementById('gpsIcon');
@@ -1105,9 +1048,8 @@
 
             state.gpsActive = true;
             btnText.innerText = "Stop GPS Tracking";
-            gpsIcon.className = "fa-solid fa-circle-stop text-tactical-danger";
+            gpsIcon.className = "fa-solid fa-circle-stop text-[#ff0055]";
 
-            // Signal host and trigger briefing
             sendPacket('GPS_STARTED', { started: true });
             if (state.currentStory) {
                 speakVoice(state.currentStory.briefing);
@@ -1117,9 +1059,7 @@
                 speakVoice("GPS tracking aktiveret. Søger satellitter.");
             }
         } else {
-            if (state.gpsWatchId) {
-                navigator.geolocation.clearWatch(state.gpsWatchId);
-            }
+            if (state.gpsWatchId) navigator.geolocation.clearWatch(state.gpsWatchId);
             state.gpsActive = false;
             btnText.innerText = "Start Real GPS Tracking";
             gpsIcon.className = "fa-solid fa-location-crosshairs text-lg";
@@ -1147,12 +1087,9 @@
 
             if (distIncrement > 0.002) {
                 state.distance += distIncrement;
-                
                 if (currentSpeed === 0 && state.lastTimestamp) {
                     const timeDeltaHours = (timestamp - state.lastTimestamp) / 3600000;
-                    if (timeDeltaHours > 0) {
-                        currentSpeed = distIncrement / timeDeltaHours;
-                    }
+                    if (timeDeltaHours > 0) currentSpeed = distIncrement / timeDeltaHours;
                 }
             }
         }
@@ -1180,16 +1117,12 @@
         return R * c;
     }
 
-    /* ==========================================================================
-       WALK SIMULATOR (TEST)
-       ========================================================================== */
     function setSimSpeed(speedVal) {
         document.getElementById('simSpeedSlider').value = speedVal;
         document.getElementById('simSpeedDisplay').innerText = `${speedVal.toFixed(1)} km/t`;
         state.simSpeed = parseFloat(speedVal);
 
         if (state.simSpeed > 0 && !state.simInterval) {
-            // If simulator is started, treat as GPS started for story briefing if not yet done
             sendPacket('GPS_STARTED', { started: true });
             if (state.currentStory && !state.currentStory.briefingRead) {
                 state.currentStory.briefingRead = true;
@@ -1275,17 +1208,12 @@
         if (progressBar) progressBar.style.width = `${percent}%`;
     }
 
-    /* ==========================================================================
-       SPEECH SYNTHESIS ENGINE (TTS)
-       ========================================================================== */
     function speakVoice(text) {
         if (state.ttsMuted) return;
-
         state.lastVoiceMessage = text;
 
         if ('speechSynthesis' in window) {
             window.speechSynthesis.cancel();
-
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = 'da-DK';
             utterance.rate = 1.05;
@@ -1303,10 +1231,10 @@
         state.ttsMuted = !state.ttsMuted;
         const muteIcon = document.getElementById('muteIcon');
         if (state.ttsMuted) {
-            if (muteIcon) muteIcon.className = "fa-solid fa-volume-xmark text-tactical-danger";
+            if (muteIcon) muteIcon.className = "fa-solid fa-volume-xmark text-[#ff0055]";
             window.speechSynthesis.cancel();
         } else {
-            if (muteIcon) muteIcon.className = "fa-solid fa-volume-high text-tactical-accent";
+            if (muteIcon) muteIcon.className = "fa-solid fa-volume-high text-[#00f0ff]";
             speakVoice("Lyd aktiveret.");
         }
     }
@@ -1315,12 +1243,12 @@
         let message = "";
         switch (type) {
             case 'ambush':
-                message = "Advarsel! Fjendtlige sensorer har spottet dig. Øg hastigheden med det samme for at undslippe bagholdet!";
+                message = "Advarsel! Fjendtlige sensorer har spottet dig. Øg hastigheden med det samme for at undslippe!";
                 logMissionEvent("🚨 HÆNDELSE: Fjendtlig patrulje opdaget. Operative beordret til sprint!");
                 break;
             case 'stealth':
                 message = "Fjendtlig drone overflyvning i din sektor. Sænk farten og hold dig i dækning indtil signalet er klart.";
-                logMissionEvent("🤫 HÆNDELSE: Drone passerer. Lydsvag infiltration påkrævet.");
+                logMissionEvent("🤫 HÆNDELSE: Drone passerer. Lydsvag fremrykning påkrævet.");
                 break;
             case 'loot':
                 message = "Ressourcecontainer lokaliseret. Materialer til basen overført til dit lager.";
@@ -1331,11 +1259,11 @@
                 logMissionEvent("💎 FORSYNING: +25 Titanium og +20 Energi opsamlet.");
                 break;
             case 'status':
-                message = `Status rapport: Du har tilbagelagt ${state.distance.toFixed(1)} kilometer. Dit tempo er stabilt. Fortsæt fremrykning.`;
+                message = `Status rapport: Du har tilbagelagt ${state.distance.toFixed(1)} kilometer. Dit tempo er stabilt.`;
                 logMissionEvent(`📡 TELEMETRI TJEK: Distancelog bekræftet.`);
                 break;
             case 'patrol':
-                message = "Patrulje passerer 200 meter foran dig. Drej svagt til højre ad næste sti.";
+                message = "Patrulje passerer foran dig. Hold kursen og vær klar.";
                 logMissionEvent("⚠️ TAKTISK OMLÆGNING: Kurs korrektion sendt.");
                 break;
             case 'completed':
@@ -1347,7 +1275,6 @@
                 logMissionEvent("🏆 MISSION SUCCES: Sektor sikret! Bonus: +1 Data Core, +30 Energi.");
                 break;
         }
-
         dispatchAudioCue(message);
     }
 
@@ -1370,44 +1297,36 @@
         }
     }
 
-    /* ==========================================================================
-       PROCEDURAL STORY PROGRESSION CONTROLLER
-       ========================================================================== */
     function checkStoryMilestones(payload) {
         if (!state.currentStory || state.missionComplete) return;
 
         const dist = payload.distance;
         const target = state.targetDistance;
 
-        // 25% Milestone
         if (dist >= target * 0.25 && !state.currentStory.triggered25) {
             state.currentStory.triggered25 = true;
             dispatchAudioCue(state.currentStory.milestone25);
             logMissionEvent(`📖 HISTORIE (25%): ${state.currentStory.milestone25}`);
         }
 
-        // 50% Milestone
         if (dist >= target * 0.50 && !state.currentStory.triggered50) {
             state.currentStory.triggered50 = true;
             dispatchAudioCue(state.currentStory.milestone50);
             logMissionEvent(`⚡ HISTORIE HØJDEPUNKT (50%): ${state.currentStory.milestone50}`);
         }
 
-        // 75% Milestone
         if (dist >= target * 0.75 && !state.currentStory.triggered75) {
             state.currentStory.triggered75 = true;
             dispatchAudioCue(state.currentStory.milestone75);
             logMissionEvent(`🚁 HISTORIE (75%): ${state.currentStory.milestone75}`);
         }
 
-        // 100% Completed
         if (dist >= target && !state.currentStory.triggeredEnd) {
             state.currentStory.triggeredEnd = true;
             state.missionComplete = true;
             dispatchAudioCue(state.currentStory.completed);
             logMissionEvent(`🏆 MISSION GENNEMFØRT: ${state.currentStory.completed}`);
             
-            // Reward mission completion
             state.resources.dataCores += 2;
             state.resources.energy += 35;
             state.resources.titanium += 40;
@@ -1427,7 +1346,6 @@
         state.lastHarvestDistance = 0.0;
         state.missionComplete = false;
 
-        // Generate procedural 4-act story for this specific distance
         state.currentStory = generateStoryForMission(type, dist);
         state.objectiveName = `${state.currentStory.title} (${dist.toFixed(1)} km)`;
 
@@ -1470,7 +1388,7 @@
         const now = new Date();
         const timeCode = now.toTimeString().split(' ')[0];
         const logEntry = document.createElement('div');
-        logEntry.className = "text-gray-300 border-l border-tactical-accent pl-2 py-0.5";
+        logEntry.className = "text-gray-300 border-l border-[#00f0ff] pl-2 py-0.5";
         logEntry.innerHTML = `<span class="text-gray-500">[${timeCode}]</span> ${message}`;
 
         logBox.appendChild(logEntry);
@@ -1481,9 +1399,9 @@
         const badge = document.getElementById('connStatusText');
         if (!badge) return;
         badge.innerText = text;
-        if (level === 'success') badge.className = "text-tactical-success font-bold";
-        else if (level === 'warn') badge.className = "text-tactical-warn font-bold";
-        else if (level === 'danger') badge.className = "text-tactical-danger font-bold";
+        if (level === 'success') badge.className = "text-[#00ff66] font-bold";
+        else if (level === 'warn') badge.className = "text-[#ffb703] font-bold";
+        else if (level === 'danger') badge.className = "text-[#ff0055] font-bold";
     }
 
     function setupUIEventListeners() {
@@ -1512,7 +1430,7 @@
     }
 
     /* ==========================================================================
-       THREE.JS 3D WORLD & INTERACTIVE VEHICLE SYSTEM
+       THREE.JS 3D WORLD
        ========================================================================== */
     const threeState = {
         scene: null,
@@ -1546,14 +1464,12 @@
         threeState.renderer = new THREE.WebGLRenderer({ canvas: container, antialias: true });
         threeState.renderer.setSize(width, height);
         threeState.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        threeState.renderer.shadowMap.enabled = true;
 
         const ambientLight = new THREE.AmbientLight(0x223344, 1.2);
         threeState.scene.add(ambientLight);
 
         const sunLight = new THREE.DirectionalLight(0x00f0ff, 1.5);
         sunLight.position.set(20, 40, 20);
-        sunLight.castShadow = true;
         threeState.scene.add(sunLight);
 
         const gridHelper = new THREE.GridHelper(80, 40, 0x00f0ff, 0x112233);
@@ -1564,7 +1480,6 @@
         const floorMat = new THREE.MeshStandardMaterial({ color: 0x070b14, roughness: 0.85, metalness: 0.2 });
         const floorMesh = new THREE.Mesh(floorGeo, floorMat);
         floorMesh.rotation.x = -Math.PI / 2;
-        floorMesh.receiveShadow = true;
         threeState.scene.add(floorMesh);
 
         createCentralBaseBuilding();
@@ -1579,7 +1494,7 @@
         const baseGroup = new THREE.Group();
 
         const domeGeo = new THREE.SphereGeometry(3, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2);
-        const domeMat = new THREE.MeshStandardMaterial({ color: 0x0c1e33, wireframe: false, roughness: 0.3, metalness: 0.8 });
+        const domeMat = new THREE.MeshStandardMaterial({ color: 0x0c1e33, roughness: 0.3, metalness: 0.8 });
         const dome = new THREE.Mesh(domeGeo, domeMat);
         baseGroup.add(dome);
 
@@ -1645,15 +1560,6 @@
         glass.position.set(0, 0.85, 0.2);
         roverGroup.add(glass);
 
-        const lightGeo = new THREE.SphereGeometry(0.12, 8, 8);
-        const lightMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-        const l1 = new THREE.Mesh(lightGeo, lightMat);
-        const l2 = new THREE.Mesh(lightGeo, lightMat);
-        l1.position.set(-0.5, 0.55, 1.12);
-        l2.position.set(0.5, 0.55, 1.12);
-        roverGroup.add(l1);
-        roverGroup.add(l2);
-
         const wheelGeo = new THREE.CylinderGeometry(0.35, 0.35, 0.3, 12);
         const wheelMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9 });
         const wheelOffsets = [
@@ -1702,8 +1608,8 @@
         const fuelBadge = document.getElementById('roverFuelBadge');
         if (fuelBadge) {
             fuelBadge.innerText = `${Math.round(threeState.fuel)}%`;
-            if (threeState.fuel < 20) fuelBadge.className = "text-tactical-danger font-bold";
-            else fuelBadge.className = "text-tactical-warn font-bold";
+            if (threeState.fuel < 20) fuelBadge.className = "text-[#ff0055] font-bold";
+            else fuelBadge.className = "text-[#ffb703] font-bold";
         }
     }
 
@@ -1715,9 +1621,9 @@
             renderBaseResources();
             consumeFuel(0);
             logMissionEvent("🔋 ROVER GENOPLADET: 100% batteri gendannet via 5 Energi.");
-            dispatchAudioCue("Køretøj fuldt opladet fra basens strømceller.");
+            dispatchAudioCue("Køretøj fuldt opladet.");
         } else {
-            alert("Ikke nok energi! Gå eller løb i den virkelige verden for at skaffe mere energi.");
+            alert("Ikke nok energi! Gå eller løb for at skaffe energi.");
         }
     }
 
@@ -1756,10 +1662,10 @@
             saveBaseGameData();
             renderBaseResources();
             logMissionEvent(`🏗️ 3D BASE BYGNING: ${data.name} opført!`);
-            dispatchAudioCue(`Ny facilitet opført på basen: ${data.name}.`);
+            dispatchAudioCue(`Ny facilitet opført: ${data.name}.`);
             document.getElementById('zoneActionPrompt').classList.add('hidden');
         } else {
-            alert(`Mangler ressourcer til ${data.name}! Kræver: ${titCost} Tit, ${eleCost} Ele, ${nrgCost} Energi.`);
+            alert(`Mangler ressourcer til ${data.name}!`);
         }
     }
 
@@ -1857,6 +1763,6 @@
     const origInitHostPeer = initHostPeer;
     initHostPeer = function() {
         origInitHostPeer();
-        setTimeout(init3DWorld, 200);
+        setTimeout(init3DWorld, 250);
     };
 </script>
