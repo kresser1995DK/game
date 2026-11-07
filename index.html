@@ -72,9 +72,9 @@
                 <div>
                     <h1 class="text-lg font-bold tracking-widest text-white uppercase font-tactical">AEGIS // OPERATIVE COMMS</h1>
                     <div class="text-xs font-mono text-gray-400 flex items-center gap-2">
-                        <span>SYS: <span id="systemModeBadge" class="text-tactical-accent">STANDBY</span></span>
+                        <span>SYS: <span id="systemModeBadge" class="text-tactical-accent font-bold">HOST COMMAND [PC]</span></span>
                         <span>•</span>
-                        <span>LINK: <span id="connStatusText" class="text-tactical-warn">INITIALISERER...</span></span>
+                        <span>LINK: <span id="connStatusText" class="text-tactical-warn font-bold">INITIALISERER...</span></span>
                     </div>
                 </div>
             </div>
@@ -123,7 +123,7 @@
 
                         <div class="bg-tactical-bg border border-tactical-border p-3 rounded">
                             <div class="text-xs font-mono text-gray-400 uppercase">Pace</div>
-                            <div id="hostPaceVal" class="text-3xl sm:text-4xl font-bold text-gray-300 font-mono">0'00"</div>
+                            <div id="hostPaceVal" class="text-3xl sm:text-4xl font-bold text-tactical-warn font-mono">0'00"</div>
                             <div class="text-xs font-mono text-gray-500">MIN/KM</div>
                         </div>
 
@@ -337,7 +337,7 @@
                         <span>Sidste Audio Ordre i Headset:</span>
                     </div>
                     <div id="mobLastAudioMsg" class="text-sm font-mono text-gray-200 italic">
-                        "Tast PC koden for at koble på..."
+                        "Venter på signal..."
                     </div>
                 </div>
 
@@ -412,7 +412,8 @@
             
             // Speech
             ttsMuted: false,
-            lastVoiceMessage: ""
+            lastVoiceMessage: "",
+            wakeLock: null
         };
 
         window.addEventListener('DOMContentLoaded', () => {
@@ -425,7 +426,7 @@
                 if (targetPin) {
                     const pinInp = document.getElementById('mobPinInput');
                     if (pinInp) pinInp.value = targetPin;
-                    setTimeout(() => connectToHostWithPin(targetPin), 500);
+                    setTimeout(() => connectToHostWithPin(targetPin), 600);
                 }
             } else {
                 setRole('host');
@@ -447,14 +448,25 @@
                 mobileView.classList.add('hidden');
                 toggleRoleBtn.innerText = "SKIFT TIL MOBIL VISNING";
                 systemModeBadge.innerText = "HOST COMMAND [PC]";
-                systemModeBadge.className = "text-tactical-accent";
+                systemModeBadge.className = "text-tactical-accent font-bold";
             } else {
                 hostView.classList.add('hidden');
                 mobileView.classList.remove('hidden');
                 toggleRoleBtn.innerText = "SKIFT TIL PC HOST";
                 systemModeBadge.innerText = "FIELD UNIT [MOBILE]";
-                systemModeBadge.className = "text-tactical-success";
+                systemModeBadge.className = "text-tactical-success font-bold";
                 initFieldPeer();
+                requestWakeLock();
+            }
+        }
+
+        async function requestWakeLock() {
+            if ('wakeLock' in navigator) {
+                try {
+                    state.wakeLock = await navigator.wakeLock.request('screen');
+                } catch (e) {
+                    console.log("WakeLock:", e.message);
+                }
             }
         }
 
@@ -476,7 +488,7 @@
             const myHostId = getPeerIdForPin(state.pin);
             state.peer = new Peer(myHostId, { debug: 1 });
 
-            state.peer.on('open', (id) => {
+            state.peer.on('open', () => {
                 updateConnStatus("VENTER PÅ FELT-ENHED", "warn");
                 logMissionEvent(`Host klar på nettet. PIN: ${state.pin}`);
             });
@@ -489,7 +501,7 @@
             state.peer.on('error', (err) => {
                 console.warn("Peer error:", err);
                 if (err.type === 'unavailable-id') {
-                    initHostPeer(); // Prøv nyt tilfældigt tal hvis kollision
+                    initHostPeer();
                 }
             });
         }
@@ -512,7 +524,6 @@
 
             const targetHostId = getPeerIdForPin(inputVal);
             const badge = document.getElementById('mobileLinkBadge');
-            const dot = document.getElementById('mobPulseDot');
             
             if (badge) {
                 badge.innerText = "OPRETTER FORBINDELSE...";
@@ -549,7 +560,6 @@
                     logMissionEvent("Mobil felt-enhed tilsluttet via WebRTC 5G link.");
                     startMissionTimer();
                     sendMissionObjectiveToMobile();
-                    speakVoice("Felt-enhed tilsluttet over internettet.");
                 } else {
                     updateConnStatus("FORBUNDET TIL PC", "success");
                     const badge = document.getElementById('mobileLinkBadge');
@@ -638,7 +648,6 @@
             if (!qrContainer) return;
             qrContainer.innerHTML = "";
 
-            // Linket peger direkte på mobilvisningen med PIN
             const originUrl = window.location.origin + window.location.pathname;
             const fullLink = `${originUrl}?role=field&pin=${pin}`;
 
@@ -755,6 +764,8 @@
             if (state.simSpeed > 0 && !state.simInterval) {
                 startSimulatorWalk();
             } else if (state.simSpeed === 0) {
+                if (state.simInterval) clearInterval(state.simInterval);
+                state.simInterval = null;
                 state.speed = 0;
                 syncAndBroadcastTelemetry();
             }
@@ -765,7 +776,7 @@
 
             state.simInterval = setInterval(() => {
                 if (state.simSpeed > 0) {
-                    const jitter = (Math.random() - 0.5) * 0.4;
+                    const jitter = (Math.random() - 0.5) * 0.3;
                     state.speed = Math.max(0.5, state.simSpeed + jitter);
 
                     const kmPerSec = state.speed / 3600;
@@ -813,8 +824,8 @@
             const hDist = document.getElementById('hostDistVal');
             const hPace = document.getElementById('hostPaceVal');
 
-            if (hSpeed) hSpeed.innerText = payload.speed.toFixed(1);
-            if (hDist) hDist.innerText = payload.distance.toFixed(2);
+            if (hSpeed) hSpeed.innerText = Number(payload.speed).toFixed(1);
+            if (hDist) hDist.innerText = Number(payload.distance).toFixed(2);
             if (hPace) hPace.innerText = payload.pace;
 
             const percent = Math.min(100, Math.round((payload.distance / state.targetDistance) * 100));
@@ -878,7 +889,7 @@
                     break;
                 case 'status':
                     message = `Status rapport: Du har tilbagelagt ${state.distance.toFixed(1)} kilometer. Dit tempo er stabilt. Fortsæt fremrykning.`;
-                    logMissionEvent(`📡 TELEMETRI TJEK: ${state.distance.toFixed(2)} km bekræftet.`);
+                    logMissionEvent(`📡 TELEMETRI TJEK: Distancelog bekræftet.`);
                     break;
                 case 'patrol':
                     message = "Patrulje passerer 200 meter foran dig. Drej svagt til højre ad næste sti.";
@@ -905,10 +916,11 @@
 
         function dispatchAudioCue(text) {
             sendPacket('VOICE_CUE', { text });
-            speakVoice(text);
-            
-            const mobAudioMsg = document.getElementById('mobLastAudioMsg');
-            if (mobAudioMsg) mobAudioMsg.innerText = `"${text}"`;
+            if (state.role === 'field') {
+                speakVoice(text);
+                const mobAudioMsg = document.getElementById('mobLastAudioMsg');
+                if (mobAudioMsg) mobAudioMsg.innerText = `"${text}"`;
+            }
         }
 
         /* ==========================================================================
