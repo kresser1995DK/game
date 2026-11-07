@@ -8,6 +8,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- QRCode.js CDN for pairing link generation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- PeerJS for direct Real WebRTC between Phone (5G) & PC -->
+    <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
     <!-- FontAwesome for tactical icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Font: Rajdhani & Share Tech Mono -->
@@ -72,7 +74,7 @@
                     <div class="text-xs font-mono text-gray-400 flex items-center gap-2">
                         <span>SYS: <span id="systemModeBadge" class="text-tactical-accent">STANDBY</span></span>
                         <span>•</span>
-                        <span>LINK: <span id="connStatusText" class="text-tactical-success">LOKAL BUS AKTIV</span></span>
+                        <span>LINK: <span id="connStatusText" class="text-tactical-warn">INITIALISERER...</span></span>
                     </div>
                 </div>
             </div>
@@ -144,7 +146,7 @@
                     </div>
                 </div>
 
-                <!-- Mission Tactical Cue Controls (Sound Injection) -->
+                <!-- Mission Tactical Cue Controls -->
                 <div class="bg-tactical-panel border border-tactical-border rounded-lg p-5">
                     <h3 class="text-md font-bold uppercase tracking-wider text-gray-300 mb-3 flex items-center gap-2">
                         <i class="fa-solid fa-bullhorn text-tactical-accent"></i>
@@ -206,46 +208,16 @@
             <!-- RIGHT COLUMN: QR PAIRING & MISSION GENERATOR (5 Cols) -->
             <div class="lg:col-span-5 flex flex-col space-y-6">
                 
-                <!-- Quick Test Button (Instant) -->
-                <div class="bg-gradient-to-r from-teal-900/40 to-cyan-900/40 border border-tactical-accent/50 rounded-lg p-4">
-                    <div class="flex items-center gap-3 mb-2">
-                        <i class="fa-solid fa-bolt text-tactical-accent text-xl"></i>
-                        <div>
-                            <div class="text-sm font-bold uppercase text-white">Øjeblikkelig Simulator & Test</div>
-                            <div class="text-xs text-gray-400">Test hele missionsflowet og stemmen direkte på skærmen uden scanning</div>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
-                        <button onclick="openSplitFieldUnit()" class="w-full py-2.5 bg-tactical-accent hover:bg-cyan-400 text-black font-bold uppercase text-xs rounded transition font-mono tracking-wider shadow-lg">
-                            <i class="fa-solid fa-play mr-1"></i> Start Lokal Simulator
-                        </button>
-                        <button onclick="launchFieldWindow()" class="w-full py-2.5 bg-tactical-bg border border-tactical-accent text-tactical-accent hover:bg-tactical-accent hover:text-black font-bold uppercase text-xs rounded transition font-mono tracking-wider shadow-lg">
-                            <i class="fa-solid fa-arrow-up-right-from-square mr-1"></i> Åbn i Nyt Vindue
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Universal Cloud Link / QR Code -->
+                <!-- Cloud Link / QR Code -->
                 <div class="bg-tactical-panel border border-tactical-border rounded-lg p-5 text-center flex flex-col items-center">
                     <div class="flex items-center space-x-2 mb-2">
                         <i class="fa-solid fa-tower-broadcast text-tactical-accent"></i>
-                        <h3 class="text-lg font-bold uppercase tracking-wider text-white">Universal Forbindelse (Mobil)</h3>
+                        <h3 class="text-lg font-bold uppercase tracking-wider text-white">WebRTC Datalink (Mobil 5G / Wi-Fi)</h3>
                     </div>
                     
                     <p class="text-[11px] text-gray-300 mb-3 max-w-sm">
-                        Kører på lokal sandkasse-bus. Åbn felt-enheden i et separat faneblad eller skift direkte mellem PC og mobil.
+                        Scan QR-koden med mobilens kamera, eller åbn siden på telefonen og indtast den 4-cifrede PIN nedenfor.
                     </p>
-
-                    <!-- Direct Open Link Display -->
-                    <div class="w-full mb-3 bg-tactical-bg border border-tactical-border p-2.5 rounded text-left font-mono text-xs">
-                        <div class="text-gray-400 text-[10px] uppercase mb-1">Aktiv Parringskanal:</div>
-                        <div class="flex gap-1.5 items-center">
-                            <input id="directMobileUrl" readonly value="LOKAL_SANDKASSE_FORBINDELSE" class="w-full bg-tactical-panel border border-gray-700 px-2 py-1 text-tactical-accent font-bold select-all text-xs rounded">
-                            <button onclick="copyMobileUrl()" class="px-2.5 py-1 bg-gray-800 hover:bg-gray-700 border border-gray-600 rounded text-xs">
-                                <i class="fa-regular fa-copy"></i>
-                            </button>
-                        </div>
-                    </div>
 
                     <!-- QR Mount -->
                     <div class="p-3 bg-white rounded-lg inline-block shadow-md relative">
@@ -256,13 +228,13 @@
 
                     <div class="mt-3 w-full bg-tactical-bg border border-tactical-border p-2 rounded text-left font-mono text-xs flex justify-between items-center">
                         <span class="text-gray-400">PIN-kode til session:</span>
-                        <span id="sessionPinCode" class="text-tactical-accent font-bold text-sm tracking-widest">7705</span>
+                        <span id="sessionPinCode" class="text-tactical-accent font-bold text-lg tracking-widest">----</span>
                     </div>
 
                     <div class="mt-3 p-2 bg-tactical-bg border border-tactical-border rounded w-full flex items-center justify-between text-xs font-mono">
                         <div class="flex items-center gap-2">
-                            <span id="qrStatusDot" class="w-2.5 h-2.5 rounded-full bg-tactical-success"></span>
-                            <span id="qrStatusText" class="text-gray-300">Lokal Bus Klar</span>
+                            <span id="qrStatusDot" class="w-2.5 h-2.5 rounded-full bg-tactical-warn animate-pulse"></span>
+                            <span id="qrStatusText" class="text-gray-300">Venter på mobil...</span>
                         </div>
                     </div>
                 </div>
@@ -318,24 +290,24 @@
                         <i id="muteIcon" class="fa-solid fa-volume-high"></i>
                     </button>
                     <span id="mobileLinkBadge" class="text-[10px] font-mono px-2 py-0.5 rounded bg-gray-900 border border-tactical-warn text-tactical-warn">
-                        TILSLUTTER
+                        IKKE FORBUNDET
                     </span>
                 </div>
             </div>
 
-            <!-- PIN Connection Bar (If Not Auto-paired) -->
+            <!-- PIN Connection Bar -->
             <div id="mobPinBar" class="bg-tactical-panel border border-tactical-border p-2.5 rounded my-2 flex gap-2 items-center text-xs font-mono">
                 <span class="text-gray-400">PIN:</span>
-                <input id="mobPinInput" type="number" placeholder="PIN" class="w-20 bg-tactical-bg border border-gray-700 px-2 py-1 rounded text-white text-center font-bold">
-                <button onclick="connectWithPin()" class="flex-1 py-1 bg-tactical-accent text-black font-bold rounded uppercase">
+                <input id="mobPinInput" type="text" placeholder="PIN" class="w-24 bg-tactical-bg border border-gray-700 px-2 py-1 rounded text-white text-center font-bold tracking-widest">
+                <button id="mobConnectBtn" onclick="connectToHostWithPin()" class="flex-1 py-1 bg-tactical-accent hover:bg-cyan-400 text-black font-bold rounded uppercase">
                     Kobl På
                 </button>
             </div>
 
-            <!-- Primary High-Contrast AMOLED Display for Walking/Running -->
+            <!-- Primary High-Contrast AMOLED Display -->
             <div class="my-auto py-6 space-y-6 text-center">
                 
-                <!-- Speed Display (Primary Focus) -->
+                <!-- Speed Display -->
                 <div>
                     <div class="text-xs font-mono text-gray-400 tracking-widest uppercase mb-1">AKTUEL HASTIGHED</div>
                     <div id="mobSpeedVal" class="text-7xl font-mono font-bold text-white tracking-tighter glow-accent">
@@ -365,7 +337,7 @@
                         <span>Sidste Audio Ordre i Headset:</span>
                     </div>
                     <div id="mobLastAudioMsg" class="text-sm font-mono text-gray-200 italic">
-                        "Venter på signal fra PC Command..."
+                        "Tast PC koden for at koble på..."
                     </div>
                 </div>
 
@@ -400,21 +372,18 @@
 
         <!-- FOOTER BAR -->
         <footer class="w-full bg-tactical-panel border-t border-tactical-border px-4 py-2 text-center text-xs font-mono text-gray-500">
-            <span>AEGIS TACTICAL PROTOCOL • SANDBOX BUS • REALTID TELEMETRI & TALE</span>
+            <span>AEGIS TACTICAL PROTOCOL • WEBRTC LIVE DATALINK • 5G / WI-FI</span>
         </footer>
 
     </div>
 
     <!-- SCRIPT & ENGINE -->
     <script>
-        /* ==========================================================================
-           STATE & CONFIGURATION
-           ========================================================================== */
         const state = {
             role: 'host', // 'host' or 'field'
-            pin: '7705',
-            channelName: 'aegis_channel_7705',
-            broadcastChannel: null,
+            pin: '',
+            peer: null,
+            conn: null,
             connected: false,
             
             // Telemetry
@@ -446,32 +415,23 @@
             lastVoiceMessage: ""
         };
 
-        /* ==========================================================================
-           INITIALIZATION & ROUTING
-           ========================================================================== */
         window.addEventListener('DOMContentLoaded', () => {
-            state.pin = Math.floor(1000 + Math.random() * 9000).toString();
-            state.channelName = `aegis_channel_${state.pin}`;
-
-            const pinDisplay = document.getElementById('sessionPinCode');
-            if (pinDisplay) pinDisplay.innerText = state.pin;
-
             const params = new URLSearchParams(window.location.search);
             const targetPin = params.get('pin');
             const requestedRole = params.get('role');
 
             if (targetPin || requestedRole === 'field') {
-                if (targetPin) {
-                    state.pin = targetPin;
-                    state.channelName = `aegis_channel_${state.pin}`;
-                }
                 setRole('field');
+                if (targetPin) {
+                    const pinInp = document.getElementById('mobPinInput');
+                    if (pinInp) pinInp.value = targetPin;
+                    setTimeout(() => connectToHostWithPin(targetPin), 500);
+                }
             } else {
                 setRole('host');
-                renderQrCode(state.pin);
+                initHostPeer();
             }
 
-            initSandboxBus();
             setupUIEventListeners();
         });
 
@@ -494,98 +454,152 @@
                 toggleRoleBtn.innerText = "SKIFT TIL PC HOST";
                 systemModeBadge.innerText = "FIELD UNIT [MOBILE]";
                 systemModeBadge.className = "text-tactical-success";
-
-                const mobPin = document.getElementById('mobPinInput');
-                if (mobPin) mobPin.value = state.pin;
+                initFieldPeer();
             }
         }
 
         /* ==========================================================================
-           SANDBOX BUS (BroadcastChannel + LocalStorage Event Fallback)
+           WEBRTC NETWORKING (PEERJS)
            ========================================================================== */
-        function initSandboxBus() {
-            updateConnStatus("LOKAL BUS AKTIV", "success");
+        function getPeerIdForPin(pin) {
+            return `aegis-runner-host-${pin}`;
+        }
 
-            if ('BroadcastChannel' in window) {
-                try {
-                    state.broadcastChannel = new BroadcastChannel(state.channelName);
-                    state.broadcastChannel.onmessage = (event) => {
-                        handleIncomingPacket(event.data);
-                    };
-                } catch (e) {
-                    console.warn("BroadcastChannel restricted, falling back to storage bus", e);
+        function initHostPeer() {
+            state.pin = Math.floor(1000 + Math.random() * 9000).toString();
+            const pinDisplay = document.getElementById('sessionPinCode');
+            if (pinDisplay) pinDisplay.innerText = state.pin;
+
+            renderQrCode(state.pin);
+            updateConnStatus("OPRETTER SIGNAL-LINK...", "warn");
+
+            const myHostId = getPeerIdForPin(state.pin);
+            state.peer = new Peer(myHostId, { debug: 1 });
+
+            state.peer.on('open', (id) => {
+                updateConnStatus("VENTER PÅ FELT-ENHED", "warn");
+                logMissionEvent(`Host klar på nettet. PIN: ${state.pin}`);
+            });
+
+            state.peer.on('connection', (connection) => {
+                state.conn = connection;
+                setupConnectionHandlers();
+            });
+
+            state.peer.on('error', (err) => {
+                console.warn("Peer error:", err);
+                if (err.type === 'unavailable-id') {
+                    initHostPeer(); // Prøv nyt tilfældigt tal hvis kollision
                 }
+            });
+        }
+
+        function initFieldPeer() {
+            if (state.peer) return;
+            state.peer = new Peer(null, { debug: 1 });
+            state.peer.on('open', () => {
+                const badge = document.getElementById('mobileLinkBadge');
+                if (badge && !state.connected) {
+                    badge.innerText = "KLAR TIL FORBINDELSE";
+                    badge.className = "text-[10px] font-mono px-2 py-0.5 rounded bg-gray-900 border border-tactical-accent text-tactical-accent";
+                }
+            });
+        }
+
+        function connectToHostWithPin(overridePin) {
+            const inputVal = overridePin || document.getElementById('mobPinInput').value.trim();
+            if (!inputVal) return;
+
+            const targetHostId = getPeerIdForPin(inputVal);
+            const badge = document.getElementById('mobileLinkBadge');
+            const dot = document.getElementById('mobPulseDot');
+            
+            if (badge) {
+                badge.innerText = "OPRETTER FORBINDELSE...";
+                badge.className = "text-[10px] font-mono px-2 py-0.5 rounded bg-gray-900 border border-tactical-warn text-tactical-warn";
             }
 
-            // Cross-window / iframe storage listener fallback
-            window.addEventListener('storage', (e) => {
-                if (e.key === state.channelName && e.newValue) {
-                    try {
-                        const parsed = JSON.parse(e.newValue);
-                        handleIncomingPacket(parsed);
-                    } catch (err) {}
+            if (!state.peer) {
+                state.peer = new Peer(null, { debug: 1 });
+                state.peer.on('open', () => {
+                    dialHost(targetHostId);
+                });
+            } else {
+                dialHost(targetHostId);
+            }
+        }
+
+        function dialHost(targetHostId) {
+            if (state.conn) {
+                try { state.conn.close(); } catch(e){}
+            }
+
+            state.conn = state.peer.connect(targetHostId, { reliable: true });
+            setupConnectionHandlers();
+        }
+
+        function setupConnectionHandlers() {
+            if (!state.conn) return;
+
+            state.conn.on('open', () => {
+                state.connected = true;
+                if (state.role === 'host') {
+                    updateConnStatus("FORBUNDET TIL FELT-ENHED", "success");
+                    updateQrStatusConnected();
+                    logMissionEvent("Mobil felt-enhed tilsluttet via WebRTC 5G link.");
+                    startMissionTimer();
+                    sendMissionObjectiveToMobile();
+                    speakVoice("Felt-enhed tilsluttet over internettet.");
+                } else {
+                    updateConnStatus("FORBUNDET TIL PC", "success");
+                    const badge = document.getElementById('mobileLinkBadge');
+                    const dot = document.getElementById('mobPulseDot');
+                    if (badge) {
+                        badge.innerText = "FORBUNDET";
+                        badge.className = "text-[10px] font-mono px-2 py-0.5 rounded bg-gray-900 border border-tactical-success text-tactical-success";
+                    }
+                    if (dot) dot.className = "w-3 h-3 rounded-full bg-tactical-success animate-ping";
+                    speakVoice("Forbindelse til PC bekræftet.");
                 }
             });
 
-            // If starting as field, announce presence immediately
-            if (state.role === 'field') {
-                sendPacket('HANDSHAKE_INIT', { role: 'field' });
-            }
+            state.conn.on('data', (data) => {
+                handleIncomingPacket(data);
+            });
+
+            state.conn.on('close', () => {
+                state.connected = false;
+                if (state.role === 'host') {
+                    updateConnStatus("MISTET FORBINDELSE", "danger");
+                    logMissionEvent("⚠️ Forbindelse til mobil enhed afbrudt.");
+                } else {
+                    const badge = document.getElementById('mobileLinkBadge');
+                    if (badge) {
+                        badge.innerText = "AFBRUDT";
+                        badge.className = "text-[10px] font-mono px-2 py-0.5 rounded bg-gray-900 border border-tactical-danger text-tactical-danger";
+                    }
+                }
+            });
         }
 
         function sendPacket(type, payload) {
-            const packet = {
-                senderRole: state.role,
-                type: type,
-                payload: payload,
-                timestamp: Date.now()
-            };
-
-            // 1. BroadcastChannel dispatch
-            if (state.broadcastChannel) {
-                try {
-                    state.broadcastChannel.postMessage(packet);
-                } catch (e) {}
-            }
-
-            // 2. Storage event dispatch
+            if (!state.conn || !state.connected) return;
             try {
-                localStorage.setItem(state.channelName, JSON.stringify(packet));
-            } catch (e) {}
+                state.conn.send({
+                    senderRole: state.role,
+                    type: type,
+                    payload: payload,
+                    timestamp: Date.now()
+                });
+            } catch (e) {
+                console.warn("Datalink send fejl:", e);
+            }
         }
 
         function handleIncomingPacket(packet) {
-            if (!packet || packet.senderRole === state.role) return;
+            if (!packet) return;
 
             switch (packet.type) {
-                case 'HANDSHAKE_INIT':
-                    if (state.role === 'host') {
-                        state.connected = true;
-                        updateConnStatus("FORBUNDET TIL FELT-ENHED", "success");
-                        updateQrStatusConnected();
-                        logMissionEvent("Mobil felt-enhed tilsluttet via taktisk datalink.");
-                        startMissionTimer();
-                        sendMissionObjectiveToMobile();
-                        sendPacket('HANDSHAKE_ACK', { status: 'ready' });
-                        speakVoice("Felt-enhed tilsluttet. Mission i gang.");
-                    }
-                    break;
-
-                case 'HANDSHAKE_ACK':
-                    if (state.role === 'field') {
-                        state.connected = true;
-                        updateConnStatus("FORBUNDET TIL PC", "success");
-                        const badge = document.getElementById('mobileLinkBadge');
-                        const dot = document.getElementById('mobPulseDot');
-                        if (badge) {
-                            badge.innerText = "FORBUNDET";
-                            badge.className = "text-[10px] font-mono px-2 py-0.5 rounded bg-gray-900 border border-tactical-success text-tactical-success";
-                        }
-                        if (dot) dot.className = "w-3 h-3 rounded-full bg-tactical-success animate-ping";
-                        speakVoice("Forbindelse til PC bekræftet.");
-                    }
-                    break;
-
                 case 'TELEMETRY':
                     if (state.role === 'host') {
                         updateHostTelemetry(packet.payload);
@@ -608,29 +622,6 @@
             }
         }
 
-        function connectWithPin() {
-            const input = document.getElementById('mobPinInput');
-            const val = input.value.trim();
-            if (!val) return;
-
-            state.pin = val;
-            state.channelName = `aegis_channel_${state.pin}`;
-
-            if (state.broadcastChannel) {
-                try { state.broadcastChannel.close(); } catch (e) {}
-            }
-
-            if ('BroadcastChannel' in window) {
-                state.broadcastChannel = new BroadcastChannel(state.channelName);
-                state.broadcastChannel.onmessage = (event) => {
-                    handleIncomingPacket(event.data);
-                };
-            }
-
-            sendPacket('HANDSHAKE_INIT', { role: 'field' });
-            updateConnStatus("SØGER PC...", "warn");
-        }
-
         function updateQrStatusConnected() {
             const qrStatusDot = document.getElementById('qrStatusDot');
             const qrStatusText = document.getElementById('qrStatusText');
@@ -642,40 +633,18 @@
             if (hostPulse) hostPulse.className = "w-2.5 h-2.5 rounded-full bg-tactical-success animate-ping";
         }
 
-        function openSplitFieldUnit() {
-            state.connected = true;
-            updateConnStatus("SIMULATOR AKTIV", "success");
-            updateQrStatusConnected();
-            logMissionEvent("Test-sensor aktiveret. Går til mobilvisning.");
-            startMissionTimer();
-            setRole('field');
-            setSimSpeed(5.5);
-            setTimeout(() => {
-                speakVoice("Felt-enhed aktiveret. Telemetri live. Begynd fremrykning.");
-            }, 400);
-        }
-
-        function launchFieldWindow() {
-            const targetUrl = `${window.location.pathname}?pin=${state.pin}&role=field`;
-            window.open(targetUrl, '_blank', 'width=420,height=780');
-        }
-
-        /* ==========================================================================
-           QR CODE GENERATOR
-           ========================================================================== */
         function renderQrCode(pin) {
             const qrContainer = document.getElementById('qrcode');
             if (!qrContainer) return;
             qrContainer.innerHTML = "";
 
-            const pairingCode = `AEGIS-FIELD-${pin}`;
-
-            const directInput = document.getElementById('directMobileUrl');
-            if (directInput) directInput.value = pairingCode;
+            // Linket peger direkte på mobilvisningen med PIN
+            const originUrl = window.location.origin + window.location.pathname;
+            const fullLink = `${originUrl}?role=field&pin=${pin}`;
 
             try {
                 new QRCode(qrContainer, {
-                    text: pairingCode,
+                    text: fullLink,
                     width: 176,
                     height: 176,
                     colorDark: "#05070a",
@@ -687,13 +656,6 @@
             }
         }
 
-        function copyMobileUrl() {
-            const input = document.getElementById('directMobileUrl');
-            input.select();
-            document.execCommand('copy');
-            logMissionEvent("Parringskode kopieret.");
-        }
-
         /* ==========================================================================
            TELEMETRY, SENSORS & GPS ENGINE
            ========================================================================== */
@@ -703,7 +665,7 @@
 
             if (!state.gpsActive) {
                 if (!navigator.geolocation) {
-                    logMissionEvent("⚠️ FEJL: GPS geolokation ikke understøttet.");
+                    speakVoice("Fejl: GPS er ikke understøttet i denne browser.");
                     return;
                 }
 
@@ -840,8 +802,10 @@
             };
 
             sendPacket('TELEMETRY', telemetryPayload);
-            updateHostTelemetry(telemetryPayload);
-            checkMissionMilestones(telemetryPayload);
+            if (state.role === 'host') {
+                updateHostTelemetry(telemetryPayload);
+                checkMissionMilestones(telemetryPayload);
+            }
         }
 
         function updateHostTelemetry(payload) {
