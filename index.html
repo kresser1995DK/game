@@ -1,1768 +1,1793 @@
-<script>
-    tailwind.config = {
-        darkMode: 'class',
-        theme: {
-            extend: {
-                colors: {
-                    tactical: {
-                        bg: '#05070a',
-                        panel: '#0c1017',
-                        border: '#1a2333',
-                        accent: '#00f0ff',
-                        warn: '#ffb703',
-                        danger: '#ff0055',
-                        success: '#00ff66',
-                        purple: '#b5179e',
-                        gold: '#ffd166'
+<!DOCTYPE html>
+<html lang="da" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AEGIS OPERATIVE // Tactical Mission Runner & Base Ops</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- QRCode.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- PeerJS for direct Real WebRTC between Phone (5G) & PC -->
+    <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+    <!-- Three.js 3D Engine -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        tactical: {
+                            bg: '#05070a',
+                            panel: '#0c1017',
+                            border: '#1a2333',
+                            accent: '#00f0ff',
+                            warn: '#ffb703',
+                            danger: '#ff0055',
+                            success: '#00ff66',
+                            purple: '#b5179e',
+                            gold: '#ffd166'
+                        }
+                    },
+                    fontFamily: {
+                        tactical: ['Rajdhani', 'sans-serif'],
+                        mono: ['Share Tech Mono', 'monospace']
                     }
-                },
-                fontFamily: {
-                    tactical: ['Rajdhani', 'sans-serif'],
-                    mono: ['Share Tech Mono', 'monospace']
                 }
             }
         }
-    }
-</script>
-<style>
-    * { box-sizing: border-box; }
-    body {
-        background-color: #05070a;
-        color: #d1d5db;
-        font-family: 'Rajdhani', sans-serif;
-        overflow-x: hidden;
-        touch-action: manipulation;
-        margin: 0;
-        padding: 0;
-    }
-    .scanline {
-        background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 255, 0, 0.03));
-        background-size: 100% 3px, 6px 100%;
-        pointer-events: none;
-    }
-    .glow-accent { text-shadow: 0 0 10px rgba(0, 240, 255, 0.65); }
-    .view-hidden { display: none !important; }
-    .view-active-grid { display: grid !important; }
-    .view-active-flex { display: flex !important; }
-</style>
+    </script>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            background-color: #05070a;
+            color: #d1d5db;
+            font-family: 'Rajdhani', sans-serif;
+            overflow-x: hidden;
+            touch-action: manipulation;
+            margin: 0;
+            padding: 0;
+        }
+        .scanline {
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 255, 0, 0.03));
+            background-size: 100% 3px, 6px 100%;
+            pointer-events: none;
+        }
+        .glow-accent { text-shadow: 0 0 10px rgba(0, 240, 255, 0.65); }
+        .view-hidden { display: none !important; }
+        .view-active-grid { display: grid !important; }
+        .view-active-flex { display: flex !important; }
+    </style>
+</head>
+<body class="min-h-screen bg-[#05070a] text-gray-200 select-none">
+    <div class="fixed inset-0 scanline z-50 pointer-events-none opacity-40"></div>
 
-
-<!-- MAIN APP WRAPPER -->
-<div id="app" class="relative z-10 w-full min-h-screen flex flex-col justify-between">
-    
-    <!-- TOP STATUS HEADER -->
-    <header class="w-full bg-[#0c1017] border-b border-[#1a2333] px-4 py-2 flex items-center justify-between">
-        <div class="flex items-center space-x-3">
-            <i class="fa-solid fa-satellite-dish text-[#00f0ff] animate-pulse text-xl"></i>
-            <div>
-                <h1 class="text-base sm:text-lg font-bold tracking-widest text-white uppercase font-tactical">AEGIS // TACTICAL COMMS & BASE COMMAND</h1>
-                <div class="text-xs font-mono text-gray-400 flex items-center gap-2">
-                    <span>SYS: <span id="systemModeBadge" class="text-[#00f0ff] font-bold">HOST COMMAND [PC]</span></span>
-                    <span>•</span>
-                    <span>LINK: <span id="connStatusText" class="text-[#ffb703] font-bold">INITIALISERER...</span></span>
+    <!-- MAIN APP WRAPPER -->
+    <div id="app" class="relative z-10 w-full min-h-screen flex flex-col justify-between">
+        
+        <!-- TOP STATUS HEADER -->
+        <header class="w-full bg-[#0c1017] border-b border-[#1a2333] px-4 py-2 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <i class="fa-solid fa-satellite-dish text-[#00f0ff] animate-pulse text-xl"></i>
+                <div>
+                    <h1 class="text-base sm:text-lg font-bold tracking-widest text-white uppercase font-tactical">AEGIS // TACTICAL COMMS & BASE COMMAND</h1>
+                    <div class="text-xs font-mono text-gray-400 flex items-center gap-2">
+                        <span>SYS: <span id="systemModeBadge" class="text-[#00f0ff] font-bold">HOST COMMAND [PC]</span></span>
+                        <span>•</span>
+                        <span>LINK: <span id="connStatusText" class="text-[#ffb703] font-bold">INITIALISERER...</span></span>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Manual Role Switcher Toggle Button -->
-        <div class="flex items-center space-x-2">
-            <button id="toggleRoleBtn" class="px-3 py-1 text-xs font-mono border border-[#00f0ff] text-[#00f0ff] hover:bg-[#00f0ff] hover:text-black rounded transition uppercase">
-                Skift Til Mobil Visning
-            </button>
-        </div>
-    </header>
+            <!-- Manual Role Switcher Toggle Button -->
+            <div class="flex items-center space-x-2">
+                <button id="toggleRoleBtn" class="px-3 py-1 text-xs font-mono border border-[#00f0ff] text-[#00f0ff] hover:bg-[#00f0ff] hover:text-black rounded transition uppercase">
+                    Skift Til Mobil Visning
+                </button>
+            </div>
+        </header>
 
-    <!-- ========================================== -->
-    <!-- VIEW 1: HOST COMMAND (PC VIEW)             -->
-    <!-- ========================================== -->
-    <main id="hostView" class="view-active-grid flex-1 p-4 md:p-6 grid-cols-1 lg:grid-cols-12 gap-6 max-w-7xl mx-auto w-full">
-        
-        <!-- LEFT COLUMN: OPERATIVE TELEMETRY, 3D WORLD & COMMS (7 Cols) -->
-        <div class="lg:col-span-7 flex flex-col space-y-6">
+        <!-- ========================================== -->
+        <!-- VIEW 1: HOST COMMAND (PC VIEW)             -->
+        <!-- ========================================== -->
+        <main id="hostView" class="view-active-grid flex-1 p-4 md:p-6 grid-cols-1 lg:grid-cols-12 gap-6 max-w-7xl mx-auto w-full">
             
-            <!-- Telemetry Cards -->
-            <div class="bg-[#0c1017] border border-[#1a2333] rounded-lg p-5 shadow-2xl relative overflow-hidden">
-                <div class="flex justify-between items-center border-b border-[#1a2333] pb-3 mb-4">
-                    <div class="flex items-center space-x-2">
-                        <span id="hostPulseDot" class="w-2.5 h-2.5 rounded-full bg-[#ffb703] animate-ping"></span>
-                        <h2 class="text-xl font-bold uppercase tracking-wider text-[#00f0ff]">Felt-Enhed Telemetri</h2>
+            <!-- LEFT COLUMN: OPERATIVE TELEMETRY, 3D WORLD & COMMS (7 Cols) -->
+            <div class="lg:col-span-7 flex flex-col space-y-6">
+                
+                <!-- Telemetry Cards -->
+                <div class="bg-[#0c1017] border border-[#1a2333] rounded-lg p-5 shadow-2xl relative overflow-hidden">
+                    <div class="flex justify-between items-center border-b border-[#1a2333] pb-3 mb-4">
+                        <div class="flex items-center space-x-2">
+                            <span id="hostPulseDot" class="w-2.5 h-2.5 rounded-full bg-[#ffb703] animate-ping"></span>
+                            <h2 class="text-xl font-bold uppercase tracking-wider text-[#00f0ff]">Felt-Enhed Telemetri</h2>
+                        </div>
+                        <span class="text-xs font-mono px-2 py-0.5 rounded bg-gray-900 border border-gray-700 text-gray-300">
+                            OPERATIVE: #RUNNER-5
+                        </span>
                     </div>
-                    <span class="text-xs font-mono px-2 py-0.5 rounded bg-gray-900 border border-gray-700 text-gray-300">
-                        OPERATIVE: #RUNNER-5
+
+                    <!-- Live KPI Grid -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+                        <div class="bg-[#05070a] border border-[#1a2333] p-3 rounded">
+                            <div class="text-xs font-mono text-gray-400 uppercase">Hastighed</div>
+                            <div id="hostSpeedVal" class="text-3xl sm:text-4xl font-bold text-[#00f0ff] font-mono glow-accent">0.0</div>
+                            <div class="text-xs font-mono text-gray-500">KM/T</div>
+                        </div>
+
+                        <div class="bg-[#05070a] border border-[#1a2333] p-3 rounded">
+                            <div class="text-xs font-mono text-gray-400 uppercase">Distance</div>
+                            <div id="hostDistVal" class="text-3xl sm:text-4xl font-bold text-white font-mono">0.00</div>
+                            <div class="text-xs font-mono text-gray-500">KILOMETER</div>
+                        </div>
+
+                        <div class="bg-[#05070a] border border-[#1a2333] p-3 rounded">
+                            <div class="text-xs font-mono text-gray-400 uppercase">Pace</div>
+                            <div id="hostPaceVal" class="text-3xl sm:text-4xl font-bold text-[#ffb703] font-mono">0'00"</div>
+                            <div class="text-xs font-mono text-gray-500">MIN/KM</div>
+                        </div>
+
+                        <div class="bg-[#05070a] border border-[#1a2333] p-3 rounded">
+                            <div class="text-xs font-mono text-gray-400 uppercase">Missionstid</div>
+                            <div id="hostTimeVal" class="text-3xl sm:text-4xl font-bold text-[#ffb703] font-mono">00:00</div>
+                            <div class="text-xs font-mono text-gray-500">MM:SS</div>
+                        </div>
+                    </div>
+
+                    <!-- Mission Goal Progress & Story Title -->
+                    <div class="mt-6">
+                        <div class="flex justify-between items-center text-xs font-mono mb-1">
+                            <span class="text-gray-300 uppercase">Mission: <span id="hostObjectiveText" class="text-[#ffd166] font-bold">Genererer historie...</span></span>
+                            <span id="hostProgressPercent" class="text-[#00f0ff] font-bold">0%</span>
+                        </div>
+                        <div class="w-full bg-[#05070a] border border-[#1a2333] h-3 rounded-full overflow-hidden p-0.5">
+                            <div id="hostProgressBar" class="h-full bg-gradient-to-r from-[#00f0ff] to-[#00ff66] w-0 rounded-full transition-all duration-300 shadow-lg"></div>
+                        </div>
+                        <div id="hostMissionStoryBrief" class="mt-2 text-xs font-mono text-gray-400 italic bg-[#05070a]/60 p-2 rounded border border-[#1a2333]/50">
+                            "Venter på missionens start via GPS..."
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3D INTERACTIVE BASE & ROVER SIMULATOR -->
+                <div class="bg-[#0c1017] border border-[#1a2333] rounded-lg p-4 shadow-2xl relative">
+                    <div class="flex justify-between items-center border-b border-[#1a2333] pb-3 mb-3">
+                        <div class="flex items-center space-x-2">
+                            <i class="fa-solid fa-gamepad text-[#00f0ff] text-lg"></i>
+                            <h3 class="text-md font-bold uppercase tracking-wider text-white">3D Outpost & Rover Simulation</h3>
+                        </div>
+                        <div class="flex items-center space-x-3 text-xs font-mono">
+                            <span class="text-gray-400">BRÆNDSTOF: <span id="roverFuelBadge" class="text-[#ffb703] font-bold">100%</span></span>
+                            <span class="bg-[#05070a] border border-gray-700 px-2 py-0.5 rounded text-[11px] text-gray-300">STYRING: WASD / PILE</span>
+                        </div>
+                    </div>
+
+                    <!-- 3D Canvas Container -->
+                    <div class="relative w-full h-80 rounded overflow-hidden border border-[#1a2333] bg-black">
+                        <canvas id="threeCanvas" class="w-full h-full block"></canvas>
+                        
+                        <!-- Overlay UI inside 3D viewport -->
+                        <div class="absolute top-2 left-2 pointer-events-none font-mono text-[10px] space-y-1 bg-black/60 p-2 rounded backdrop-blur border border-gray-800">
+                            <div class="text-[#00f0ff] font-bold flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-[#00f0ff] animate-ping"></span>
+                                SEKTOR: OUTPOST SIGMA-9
+                            </div>
+                            <div class="text-gray-400">KØRETØJ: BIONISK SCOUT ROVER</div>
+                            <div id="roverCoordinates" class="text-gray-500">POS: X:0 Z:0</div>
+                        </div>
+
+                        <!-- 3D Action Prompt Overlay -->
+                        <div id="zoneActionPrompt" class="hidden absolute bottom-3 left-1/2 -translate-x-1/2 bg-[#0c1017]/90 border border-[#00f0ff] px-4 py-2 rounded-full font-mono text-xs text-white shadow-2xl flex items-center gap-2">
+                            <i class="fa-solid fa-hammer text-[#00f0ff] animate-bounce"></i>
+                            <span id="zonePromptText">Byg Solcellekuppel [Tryk E]</span>
+                        </div>
+                    </div>
+
+                    <!-- 3D Control Hints & Rover Specs -->
+                    <div class="grid grid-cols-3 gap-2 mt-3 text-center text-xs font-mono">
+                        <button onclick="driveRoverForward()" class="bg-[#05070a] hover:bg-[#0c1017] border border-[#1a2333] py-2 rounded text-gray-300 active:text-[#00f0ff] transition">
+                            <i class="fa-solid fa-arrow-up"></i> Fremad
+                        </button>
+                        <div class="flex gap-2">
+                            <button onclick="turnRover(-1)" class="flex-1 bg-[#05070a] hover:bg-[#0c1017] border border-[#1a2333] py-2 rounded text-gray-300 active:text-[#00f0ff] transition">
+                                <i class="fa-solid fa-arrow-left"></i>
+                            </button>
+                            <button onclick="turnRover(1)" class="flex-1 bg-[#05070a] hover:bg-[#0c1017] border border-[#1a2333] py-2 rounded text-gray-300 active:text-[#00f0ff] transition">
+                                <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        </div>
+                        <button onclick="refuelRover()" class="bg-[#05070a] hover:bg-[#0c1017] border border-[#ffb703]/50 hover:border-[#ffb703] py-2 rounded text-[#ffb703] font-bold transition flex items-center justify-center gap-1">
+                            <i class="fa-solid fa-charging-station"></i> Genoplad (5 Energi)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- BASE OPERATIONS & CRAFTING WORKSHOP (SMEDJEN) -->
+                <div class="bg-[#0c1017] border border-[#1a2333] rounded-lg p-5">
+                    <div class="flex justify-between items-center border-b border-[#1a2333] pb-3 mb-4">
+                        <h3 class="text-md font-bold uppercase tracking-wider text-[#ffd166] flex items-center gap-2">
+                            <i class="fa-solid fa-screwdriver-wrench"></i>
+                            Smedjen & Base Operations
+                        </h3>
+                        <span class="text-xs font-mono text-gray-400">BASIS NIVEAU: <span id="baseLevelBadge" class="text-[#00f0ff] font-bold">MK I</span></span>
+                    </div>
+
+                    <!-- Resource Bank Display -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5 font-mono">
+                        <div class="bg-[#05070a] border border-[#1a2333] p-2.5 rounded flex items-center gap-3">
+                            <i class="fa-solid fa-cubes text-[#00f0ff] text-xl"></i>
+                            <div>
+                                <div class="text-[10px] text-gray-400 uppercase">Titanium</div>
+                                <div id="resTitanium" class="text-lg font-bold text-white">0</div>
+                            </div>
+                        </div>
+
+                        <div class="bg-[#05070a] border border-[#1a2333] p-2.5 rounded flex items-center gap-3">
+                            <i class="fa-solid fa-bolt text-[#ffb703] text-xl"></i>
+                            <div>
+                                <div class="text-[10px] text-gray-400 uppercase">Energi-Celler</div>
+                                <div id="resEnergy" class="text-lg font-bold text-white">0</div>
+                            </div>
+                        </div>
+
+                        <div class="bg-[#05070a] border border-[#1a2333] p-2.5 rounded flex items-center gap-3">
+                            <i class="fa-solid fa-microchip text-[#00ff66] text-xl"></i>
+                            <div>
+                                <div class="text-[10px] text-gray-400 uppercase">Elektronik</div>
+                                <div id="resElectronics" class="text-lg font-bold text-white">0</div>
+                            </div>
+                        </div>
+
+                        <div class="bg-[#05070a] border border-[#1a2333] p-2.5 rounded flex items-center gap-3">
+                            <i class="fa-solid fa-gem text-[#b5179e] text-xl"></i>
+                            <div>
+                                <div class="text-[10px] text-gray-400 uppercase">Data Cores</div>
+                                <div id="resDataCores" class="text-lg font-bold text-[#ffd166]">0</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Workshop Upgrade Tabs / Actions -->
+                    <div class="space-y-3 font-mono text-xs">
+                        <div class="text-gray-300 font-bold uppercase tracking-wider text-[11px] mb-1">Byg & Opgrader Faciliteter:</div>
+                        
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div class="bg-[#05070a] border border-[#1a2333] p-3 rounded flex flex-col justify-between">
+                                <div>
+                                    <div class="flex justify-between items-center mb-1">
+                                        <span class="font-bold text-white">📡 Langtrækkende Radar</span>
+                                        <span id="lvlRadar" class="text-[#00f0ff] font-bold">Lvl 1</span>
+                                    </div>
+                                    <p class="text-[11px] text-gray-400 mb-2 leading-tight">Øger ressource-høst per 250m tilbagelagt med +25%.</p>
+                                    <div class="text-[10px] text-[#ffb703] mb-3">Pris: 40 Titanium • 20 Energi</div>
+                                </div>
+                                <button onclick="upgradeFacility('radar')" class="w-full py-1.5 bg-[#0c1017] border border-[#00f0ff] hover:bg-[#00f0ff] hover:text-black text-[#00f0ff] font-bold rounded uppercase transition">
+                                    Opgrader
+                                </button>
+                            </div>
+
+                            <div class="bg-[#05070a] border border-[#1a2333] p-3 rounded flex flex-col justify-between">
+                                <div>
+                                    <div class="flex justify-between items-center mb-1">
+                                        <span class="font-bold text-white">🦿 Bioniske Støvler</span>
+                                        <span id="lvlBoots" class="text-[#00f0ff] font-bold">Lvl 1</span>
+                                    </div>
+                                    <p class="text-[11px] text-gray-400 mb-2 leading-tight">Giver Data Core bonus, når løberen holder over 9.0 km/t.</p>
+                                    <div class="text-[10px] text-[#ffb703] mb-3">Pris: 35 Elektronik • 30 Titanium</div>
+                                </div>
+                                <button onclick="upgradeFacility('boots')" class="w-full py-1.5 bg-[#0c1017] border border-[#00f0ff] hover:bg-[#00f0ff] hover:text-black text-[#00f0ff] font-bold rounded uppercase transition">
+                                    Opgrader
+                                </button>
+                            </div>
+
+                            <div class="bg-[#05070a] border border-[#1a2333] p-3 rounded flex flex-col justify-between">
+                                <div>
+                                    <div class="flex justify-between items-center mb-1">
+                                        <span class="font-bold text-white">🛡️ Forsvarsperimeter</span>
+                                        <span id="lvlDefense" class="text-[#00f0ff] font-bold">Lvl 1</span>
+                                    </div>
+                                    <p class="text-[11px] text-gray-400 mb-2 leading-tight">Beskytter basens lagre mod bagholdsangreb under missionen.</p>
+                                    <div class="text-[10px] text-[#ffb703] mb-3">Pris: 50 Energi • 2 Data Cores</div>
+                                </div>
+                                <button onclick="upgradeFacility('defense')" class="w-full py-1.5 bg-[#0c1017] border border-[#00f0ff] hover:bg-[#00f0ff] hover:text-black text-[#00f0ff] font-bold rounded uppercase transition">
+                                    Opgrader
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tactical Voice Controls -->
+                <div class="bg-[#0c1017] border border-[#1a2333] rounded-lg p-5">
+                    <h3 class="text-md font-bold uppercase tracking-wider text-gray-300 mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-bullhorn text-[#00f0ff]"></i>
+                        Send Taktisk TTS Lydordre til Høretelefoner
+                    </h3>
+                    
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-4">
+                        <button onclick="triggerVoiceCue('ambush')" class="px-3 py-2 bg-[#05070a] border border-[#ff0055]/60 hover:border-[#ff0055] hover:bg-[#ff0055]/10 text-[#ff0055] rounded text-xs font-mono text-left transition flex items-center justify-between">
+                            <span>🚨 Bagholdsangreb! (Løb)</span>
+                            <i class="fa-solid fa-play"></i>
+                        </button>
+                        <button onclick="triggerVoiceCue('stealth')" class="px-3 py-2 bg-[#05070a] border border-[#ffb703]/60 hover:border-[#ffb703] hover:bg-[#ffb703]/10 text-[#ffb703] rounded text-xs font-mono text-left transition flex items-center justify-between">
+                            <span>🤫 Snigeruter (Sænk fart)</span>
+                            <i class="fa-solid fa-play"></i>
+                        </button>
+                        <button onclick="triggerVoiceCue('loot')" class="px-3 py-2 bg-[#05070a] border border-[#00ff66]/60 hover:border-[#00ff66] hover:bg-[#00ff66]/10 text-[#00ff66] rounded text-xs font-mono text-left transition flex items-center justify-between">
+                            <span>💎 Ressource Sikret</span>
+                            <i class="fa-solid fa-play"></i>
+                        </button>
+                        <button onclick="triggerVoiceCue('status')" class="px-3 py-2 bg-[#05070a] border border-[#00f0ff]/60 hover:border-[#00f0ff] hover:bg-[#00f0ff]/10 text-[#00f0ff] rounded text-xs font-mono text-left transition flex items-center justify-between">
+                            <span>📡 Status Rapport</span>
+                            <i class="fa-solid fa-play"></i>
+                        </button>
+                        <button onclick="triggerVoiceCue('patrol')" class="px-3 py-2 bg-[#05070a] border border-gray-700 hover:border-gray-500 rounded text-xs font-mono text-left text-gray-300 transition flex items-center justify-between">
+                            <span>⚠️ Drone Patrulje</span>
+                            <i class="fa-solid fa-play"></i>
+                        </button>
+                        <button onclick="triggerVoiceCue('completed')" class="px-3 py-2 bg-[#05070a] border border-[#00ff66]/80 text-[#00ff66] rounded text-xs font-mono text-left transition flex items-center justify-between">
+                            <span>🏆 Mission Gennemført</span>
+                            <i class="fa-solid fa-play"></i>
+                        </button>
+                    </div>
+
+                    <!-- Custom Order input -->
+                    <div class="flex gap-2">
+                        <input id="customTtsInput" type="text" placeholder="Skriv brugerdefineret stemmeordre..." class="flex-1 bg-[#05070a] border border-[#1a2333] px-3 py-2 text-sm font-mono rounded focus:outline-none focus:border-[#00f0ff] text-white">
+                        <button onclick="sendCustomTts()" class="px-4 py-2 bg-[#00f0ff] hover:bg-cyan-400 text-black font-bold font-mono rounded text-xs transition uppercase">
+                            Send Tale
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Event Log -->
+                <div class="bg-[#0c1017] border border-[#1a2333] rounded-lg p-5 flex-1 flex flex-col min-h-[220px]">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-md font-bold uppercase tracking-wider text-gray-300 flex items-center gap-2">
+                            <i class="fa-solid fa-terminal text-[#00f0ff]"></i>
+                            Taktisk Hændelseslog & Historiefortælling
+                        </h3>
+                        <span class="text-xs font-mono text-gray-500">LIVE FEED</span>
+                    </div>
+                    <div id="missionLog" class="flex-1 bg-[#05070a] border border-[#1a2333] p-3 rounded font-mono text-xs overflow-y-auto max-h-56 space-y-2">
+                        <div class="text-gray-500">[00:00:00] Venter på at Felt-Enheden aktiveres og opretter forbindelse...</div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- RIGHT COLUMN: QR PAIRING & MISSION GENERATOR (5 Cols) -->
+            <div class="lg:col-span-5 flex flex-col space-y-6">
+                
+                <!-- Cloud Link / QR Code -->
+                <div class="bg-[#0c1017] border border-[#1a2333] rounded-lg p-5 text-center flex flex-col items-center">
+                    <div class="flex items-center space-x-2 mb-2">
+                        <i class="fa-solid fa-tower-broadcast text-[#00f0ff]"></i>
+                        <h3 class="text-lg font-bold uppercase tracking-wider text-white">WebRTC Datalink (Mobil 5G / Wi-Fi)</h3>
+                    </div>
+                    
+                    <p class="text-[11px] text-gray-300 mb-3 max-w-sm">
+                        Scan QR-koden med mobilens kamera, eller åbn siden på telefonen og indtast den 4-cifrede PIN nedenfor.
+                    </p>
+
+                    <!-- QR Mount -->
+                    <div class="p-3 bg-white rounded-lg inline-block shadow-md relative">
+                        <div id="qrcode" class="w-44 h-44 flex items-center justify-center">
+                            <span class="text-xs text-gray-500 font-mono">Genererer QR...</span>
+                        </div>
+                    </div>
+
+                    <div class="mt-3 w-full bg-[#05070a] border border-[#1a2333] p-2 rounded text-left font-mono text-xs flex justify-between items-center">
+                        <span class="text-gray-400">PIN-kode til session:</span>
+                        <span id="sessionPinCode" class="text-[#00f0ff] font-bold text-lg tracking-widest">----</span>
+                    </div>
+
+                    <div class="mt-3 p-2 bg-[#05070a] border border-[#1a2333] rounded w-full flex items-center justify-between text-xs font-mono">
+                        <div class="flex items-center gap-2">
+                            <span id="qrStatusDot" class="w-2.5 h-2.5 rounded-full bg-[#ffb703] animate-pulse"></span>
+                            <span id="qrStatusText" class="text-gray-300">Venter på mobil...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Procedurel Mission & Historie Setup -->
+                <div class="bg-[#0c1017] border border-[#1a2333] rounded-lg p-5">
+                    <h3 class="text-md font-bold uppercase tracking-wider text-white mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-book-journal-whills text-[#00f0ff]"></i>
+                        Procedurel Historie Generator
+                    </h3>
+
+                    <div class="space-y-3 font-mono text-xs">
+                        <div>
+                            <label class="block text-gray-400 mb-1">Missions-Tema:</label>
+                            <select id="missionTypeSelect" class="w-full bg-[#05070a] border border-[#1a2333] p-2 rounded text-white focus:outline-none focus:border-[#00f0ff]">
+                                <option value="recon">Recon / Rekognoscering i Forbudt Zone</option>
+                                <option value="scavenge">Råstof Ekstraktion & Bjærgning</option>
+                                <option value="escape">Flugt fra Bio-Mech Zombier & Droner</option>
+                                <option value="tech">Infiltration af Automatiseret Fabrik</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-gray-400 mb-1">
+                                <span>Vælg Din Gå/Løbe Distance:</span>
+                                <span id="distTargetLabel" class="text-[#00f0ff] font-bold">5.0 km</span>
+                            </div>
+                            <input id="distTargetSlider" type="range" min="1.0" max="15.0" step="0.5" value="5.0" class="w-full accent-[#00f0ff]">
+                            <div class="flex justify-between text-[10px] text-gray-500 mt-0.5">
+                                <span>1 km (Hurtig tur)</span>
+                                <span>5 km (Klassisk)</span>
+                                <span>15 km (Ekspedition)</span>
+                            </div>
+                        </div>
+
+                        <div class="pt-2">
+                            <button onclick="deployNewMission()" class="w-full py-2.5 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold tracking-wider rounded uppercase transition shadow-lg flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-scroll"></i> Generer Ny Historie & Udrul
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </main>
+
+        <!-- ========================================== -->
+        <!-- VIEW 2: FIELD UNIT SENSOR (MOBILE VIEW)    -->
+        <!-- ========================================== -->
+        <main id="mobileView" class="view-hidden flex-1 p-4 flex-col justify-between max-w-md mx-auto w-full">
+            
+            <!-- Mobile Header Bar -->
+            <div class="flex items-center justify-between border-b border-[#1a2333] pb-3">
+                <div class="flex items-center space-x-2">
+                    <span id="mobPulseDot" class="w-3 h-3 rounded-full bg-[#ffb703]"></span>
+                    <span class="font-mono text-sm tracking-widest text-[#00f0ff] font-bold uppercase">FIELD SENSOR</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button id="ttsMuteBtn" onclick="toggleMute()" class="w-8 h-8 rounded border border-gray-700 bg-[#0c1017] flex items-center justify-center text-[#00f0ff] text-sm">
+                        <i id="muteIcon" class="fa-solid fa-volume-high"></i>
+                    </button>
+                    <span id="mobileLinkBadge" class="text-[10px] font-mono px-2 py-0.5 rounded bg-gray-900 border border-[#ffb703] text-[#ffb703]">
+                        IKKE FORBUNDET
                     </span>
                 </div>
+            </div>
 
-                <!-- Live KPI Grid -->
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-                    <div class="bg-[#05070a] border border-[#1a2333] p-3 rounded">
-                        <div class="text-xs font-mono text-gray-400 uppercase">Hastighed</div>
-                        <div id="hostSpeedVal" class="text-3xl sm:text-4xl font-bold text-[#00f0ff] font-mono glow-accent">0.0</div>
-                        <div class="text-xs font-mono text-gray-500">KM/T</div>
+            <!-- PIN Connection Bar -->
+            <div id="mobPinBar" class="bg-[#0c1017] border border-[#1a2333] p-2.5 rounded my-2 flex gap-2 items-center text-xs font-mono">
+                <span class="text-gray-400">PIN:</span>
+                <input id="mobPinInput" type="text" placeholder="PIN" class="w-24 bg-[#05070a] border border-gray-700 px-2 py-1 rounded text-white text-center font-bold tracking-widest">
+                <button id="mobConnectBtn" onclick="connectToHostWithPin()" class="flex-1 py-1 bg-[#00f0ff] hover:bg-cyan-400 text-black font-bold rounded uppercase">
+                    Kobl På
+                </button>
+            </div>
+
+            <!-- Active Story Mission Banner (Mobile) -->
+            <div class="bg-[#0c1017] border border-[#00f0ff]/40 rounded p-2.5 my-1 font-mono text-xs">
+                <div class="flex justify-between items-center mb-1">
+                    <span class="text-[#00f0ff] font-bold uppercase">Aktiv Mission:</span>
+                    <span id="mobTargetDist" class="text-white font-bold">5.0 km</span>
+                </div>
+                <div id="mobStoryTitle" class="text-[#ffd166] font-bold truncate">Initialiserer...</div>
+                <div class="w-full bg-[#05070a] border border-[#1a2333] h-2 rounded-full overflow-hidden mt-1.5 p-0.5">
+                    <div id="mobProgressBar" class="h-full bg-gradient-to-r from-[#00f0ff] to-[#00ff66] w-0 rounded-full transition-all duration-300"></div>
+                </div>
+            </div>
+
+            <!-- Primary High-Contrast AMOLED Display -->
+            <div class="my-auto py-3 space-y-4 text-center">
+                <div>
+                    <div class="text-xs font-mono text-gray-400 tracking-widest uppercase mb-1">AKTUEL HASTIGHED</div>
+                    <div id="mobSpeedVal" class="text-7xl font-mono font-bold text-white tracking-tighter glow-accent">
+                        0.0
                     </div>
+                    <div class="text-sm font-mono text-[#00f0ff] font-bold tracking-widest mt-1">KM/T</div>
+                </div>
 
-                    <div class="bg-[#05070a] border border-[#1a2333] p-3 rounded">
+                <div class="grid grid-cols-2 gap-4 pt-3 border-t border-b border-[#1a2333]/70 py-3">
+                    <div>
                         <div class="text-xs font-mono text-gray-400 uppercase">Distance</div>
-                        <div id="hostDistVal" class="text-3xl sm:text-4xl font-bold text-white font-mono">0.00</div>
-                        <div class="text-xs font-mono text-gray-500">KILOMETER</div>
+                        <div id="mobDistVal" class="text-4xl font-mono font-bold text-white">0.00</div>
+                        <div class="text-xs font-mono text-gray-500">KM</div>
                     </div>
-
-                    <div class="bg-[#05070a] border border-[#1a2333] p-3 rounded">
-                        <div class="text-xs font-mono text-gray-400 uppercase">Pace</div>
-                        <div id="hostPaceVal" class="text-3xl sm:text-4xl font-bold text-[#ffb703] font-mono">0'00"</div>
+                    <div>
+                        <div class="text-xs font-mono text-gray-400 uppercase">Tempo</div>
+                        <div id="mobPaceVal" class="text-4xl font-mono font-bold text-[#ffb703]">0'00"</div>
                         <div class="text-xs font-mono text-gray-500">MIN/KM</div>
                     </div>
-
-                    <div class="bg-[#05070a] border border-[#1a2333] p-3 rounded">
-                        <div class="text-xs font-mono text-gray-400 uppercase">Missionstid</div>
-                        <div id="hostTimeVal" class="text-3xl sm:text-4xl font-bold text-[#ffb703] font-mono">00:00</div>
-                        <div class="text-xs font-mono text-gray-500">MM:SS</div>
-                    </div>
                 </div>
 
-                <!-- Mission Goal Progress & Story Title -->
-                <div class="mt-6">
-                    <div class="flex justify-between items-center text-xs font-mono mb-1">
-                        <span class="text-gray-300 uppercase">Mission: <span id="hostObjectiveText" class="text-[#ffd166] font-bold">Genererer historie...</span></span>
-                        <span id="hostProgressPercent" class="text-[#00f0ff] font-bold">0%</span>
+                <div class="bg-[#0c1017] border border-[#1a2333]/90 p-3 rounded-lg text-left">
+                    <div class="text-[10px] font-mono text-[#00f0ff] uppercase flex items-center gap-1.5 mb-1">
+                        <i class="fa-solid fa-radio animate-pulse"></i>
+                        <span>Historie Lydordre i Headset:</span>
                     </div>
-                    <div class="w-full bg-[#05070a] border border-[#1a2333] h-3 rounded-full overflow-hidden p-0.5">
-                        <div id="hostProgressBar" class="h-full bg-gradient-to-r from-[#00f0ff] to-[#00ff66] w-0 rounded-full transition-all duration-300 shadow-lg"></div>
-                    </div>
-                    <div id="hostMissionStoryBrief" class="mt-2 text-xs font-mono text-gray-400 italic bg-[#05070a]/60 p-2 rounded border border-[#1a2333]/50">
-                        "Venter på missionens start via GPS..."
+                    <div id="mobLastAudioMsg" class="text-xs font-mono text-gray-200 italic leading-snug">
+                        "Tænd GPS'en for at modtage din missions-briefing..."
                     </div>
                 </div>
             </div>
 
-            <!-- 3D INTERACTIVE BASE & ROVER SIMULATOR -->
-            <div class="bg-[#0c1017] border border-[#1a2333] rounded-lg p-4 shadow-2xl relative">
-                <div class="flex justify-between items-center border-b border-[#1a2333] pb-3 mb-3">
-                    <div class="flex items-center space-x-2">
-                        <i class="fa-solid fa-gamepad text-[#00f0ff] text-lg"></i>
-                        <h3 class="text-md font-bold uppercase tracking-wider text-white">3D Outpost & Rover Simulation</h3>
-                    </div>
-                    <div class="flex items-center space-x-3 text-xs font-mono">
-                        <span class="text-gray-400">BRÆNDSTOF: <span id="roverFuelBadge" class="text-[#ffb703] font-bold">100%</span></span>
-                        <span class="bg-[#05070a] border border-gray-700 px-2 py-0.5 rounded text-[11px] text-gray-300">STYRING: WASD / PILE</span>
-                    </div>
-                </div>
-
-                <!-- 3D Canvas Container -->
-                <div class="relative w-full h-80 rounded overflow-hidden border border-[#1a2333] bg-black">
-                    <canvas id="threeCanvas" class="w-full h-full block"></canvas>
-                    
-                    <!-- Overlay UI inside 3D viewport -->
-                    <div class="absolute top-2 left-2 pointer-events-none font-mono text-[10px] space-y-1 bg-black/60 p-2 rounded backdrop-blur border border-gray-800">
-                        <div class="text-[#00f0ff] font-bold flex items-center gap-1.5">
-                            <span class="w-2 h-2 rounded-full bg-[#00f0ff] animate-ping"></span>
-                            SEKTOR: OUTPOST SIGMA-9
-                        </div>
-                        <div class="text-gray-400">KØRETØJ: BIONISK SCOUT ROVER</div>
-                        <div id="roverCoordinates" class="text-gray-500">POS: X:0 Z:0</div>
-                    </div>
-
-                    <!-- 3D Action Prompt Overlay -->
-                    <div id="zoneActionPrompt" class="hidden absolute bottom-3 left-1/2 -translate-x-1/2 bg-[#0c1017]/90 border border-[#00f0ff] px-4 py-2 rounded-full font-mono text-xs text-white shadow-2xl flex items-center gap-2">
-                        <i class="fa-solid fa-hammer text-[#00f0ff] animate-bounce"></i>
-                        <span id="zonePromptText">Byg Solcellekuppel [Tryk E]</span>
-                    </div>
-                </div>
-
-                <!-- 3D Control Hints & Rover Specs -->
-                <div class="grid grid-cols-3 gap-2 mt-3 text-center text-xs font-mono">
-                    <button onclick="driveRoverForward()" class="bg-[#05070a] hover:bg-[#0c1017] border border-[#1a2333] py-2 rounded text-gray-300 active:text-[#00f0ff] transition">
-                        <i class="fa-solid fa-arrow-up"></i> Fremad
-                    </button>
-                    <div class="flex gap-2">
-                        <button onclick="turnRover(-1)" class="flex-1 bg-[#05070a] hover:bg-[#0c1017] border border-[#1a2333] py-2 rounded text-gray-300 active:text-[#00f0ff] transition">
-                            <i class="fa-solid fa-arrow-left"></i>
-                        </button>
-                        <button onclick="turnRover(1)" class="flex-1 bg-[#05070a] hover:bg-[#0c1017] border border-[#1a2333] py-2 rounded text-gray-300 active:text-[#00f0ff] transition">
-                            <i class="fa-solid fa-arrow-right"></i>
-                        </button>
-                    </div>
-                    <button onclick="refuelRover()" class="bg-[#05070a] hover:bg-[#0c1017] border border-[#ffb703]/50 hover:border-[#ffb703] py-2 rounded text-[#ffb703] font-bold transition flex items-center justify-center gap-1">
-                        <i class="fa-solid fa-charging-station"></i> Genoplad (5 Energi)
-                    </button>
-                </div>
-            </div>
-
-            <!-- BASE OPERATIONS & CRAFTING WORKSHOP (SMEDJEN) -->
-            <div class="bg-[#0c1017] border border-[#1a2333] rounded-lg p-5">
-                <div class="flex justify-between items-center border-b border-[#1a2333] pb-3 mb-4">
-                    <h3 class="text-md font-bold uppercase tracking-wider text-[#ffd166] flex items-center gap-2">
-                        <i class="fa-solid fa-screwdriver-wrench"></i>
-                        Smedjen & Base Operations
-                    </h3>
-                    <span class="text-xs font-mono text-gray-400">BASIS NIVEAU: <span id="baseLevelBadge" class="text-[#00f0ff] font-bold">MK I</span></span>
-                </div>
-
-                <!-- Resource Bank Display -->
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5 font-mono">
-                    <div class="bg-[#05070a] border border-[#1a2333] p-2.5 rounded flex items-center gap-3">
-                        <i class="fa-solid fa-cubes text-[#00f0ff] text-xl"></i>
-                        <div>
-                            <div class="text-[10px] text-gray-400 uppercase">Titanium</div>
-                            <div id="resTitanium" class="text-lg font-bold text-white">0</div>
-                        </div>
-                    </div>
-
-                    <div class="bg-[#05070a] border border-[#1a2333] p-2.5 rounded flex items-center gap-3">
-                        <i class="fa-solid fa-bolt text-[#ffb703] text-xl"></i>
-                        <div>
-                            <div class="text-[10px] text-gray-400 uppercase">Energi-Celler</div>
-                            <div id="resEnergy" class="text-lg font-bold text-white">0</div>
-                        </div>
-                    </div>
-
-                    <div class="bg-[#05070a] border border-[#1a2333] p-2.5 rounded flex items-center gap-3">
-                        <i class="fa-solid fa-microchip text-[#00ff66] text-xl"></i>
-                        <div>
-                            <div class="text-[10px] text-gray-400 uppercase">Elektronik</div>
-                            <div id="resElectronics" class="text-lg font-bold text-white">0</div>
-                        </div>
-                    </div>
-
-                    <div class="bg-[#05070a] border border-[#1a2333] p-2.5 rounded flex items-center gap-3">
-                        <i class="fa-solid fa-gem text-[#b5179e] text-xl"></i>
-                        <div>
-                            <div class="text-[10px] text-gray-400 uppercase">Data Cores</div>
-                            <div id="resDataCores" class="text-lg font-bold text-[#ffd166]">0</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Workshop Upgrade Tabs / Actions -->
-                <div class="space-y-3 font-mono text-xs">
-                    <div class="text-gray-300 font-bold uppercase tracking-wider text-[11px] mb-1">Byg & Opgrader Faciliteter:</div>
-                    
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <div class="bg-[#05070a] border border-[#1a2333] p-3 rounded flex flex-col justify-between">
-                            <div>
-                                <div class="flex justify-between items-center mb-1">
-                                    <span class="font-bold text-white">📡 Langtrækkende Radar</span>
-                                    <span id="lvlRadar" class="text-[#00f0ff] font-bold">Lvl 1</span>
-                                </div>
-                                <p class="text-[11px] text-gray-400 mb-2 leading-tight">Øger ressource-høst per 250m tilbagelagt med +25%.</p>
-                                <div class="text-[10px] text-[#ffb703] mb-3">Pris: 40 Titanium • 20 Energi</div>
-                            </div>
-                            <button onclick="upgradeFacility('radar')" class="w-full py-1.5 bg-[#0c1017] border border-[#00f0ff] hover:bg-[#00f0ff] hover:text-black text-[#00f0ff] font-bold rounded uppercase transition">
-                                Opgrader
-                            </button>
-                        </div>
-
-                        <div class="bg-[#05070a] border border-[#1a2333] p-3 rounded flex flex-col justify-between">
-                            <div>
-                                <div class="flex justify-between items-center mb-1">
-                                    <span class="font-bold text-white">🦿 Bioniske Støvler</span>
-                                    <span id="lvlBoots" class="text-[#00f0ff] font-bold">Lvl 1</span>
-                                </div>
-                                <p class="text-[11px] text-gray-400 mb-2 leading-tight">Giver Data Core bonus, når løberen holder over 9.0 km/t.</p>
-                                <div class="text-[10px] text-[#ffb703] mb-3">Pris: 35 Elektronik • 30 Titanium</div>
-                            </div>
-                            <button onclick="upgradeFacility('boots')" class="w-full py-1.5 bg-[#0c1017] border border-[#00f0ff] hover:bg-[#00f0ff] hover:text-black text-[#00f0ff] font-bold rounded uppercase transition">
-                                Opgrader
-                            </button>
-                        </div>
-
-                        <div class="bg-[#05070a] border border-[#1a2333] p-3 rounded flex flex-col justify-between">
-                            <div>
-                                <div class="flex justify-between items-center mb-1">
-                                    <span class="font-bold text-white">🛡️ Forsvarsperimeter</span>
-                                    <span id="lvlDefense" class="text-[#00f0ff] font-bold">Lvl 1</span>
-                                </div>
-                                <p class="text-[11px] text-gray-400 mb-2 leading-tight">Beskytter basens lagre mod bagholdsangreb under missionen.</p>
-                                <div class="text-[10px] text-[#ffb703] mb-3">Pris: 50 Energi • 2 Data Cores</div>
-                            </div>
-                            <button onclick="upgradeFacility('defense')" class="w-full py-1.5 bg-[#0c1017] border border-[#00f0ff] hover:bg-[#00f0ff] hover:text-black text-[#00f0ff] font-bold rounded uppercase transition">
-                                Opgrader
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tactical Voice Controls -->
-            <div class="bg-[#0c1017] border border-[#1a2333] rounded-lg p-5">
-                <h3 class="text-md font-bold uppercase tracking-wider text-gray-300 mb-3 flex items-center gap-2">
-                    <i class="fa-solid fa-bullhorn text-[#00f0ff]"></i>
-                    Send Taktisk TTS Lydordre til Høretelefoner
-                </h3>
-                
-                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-4">
-                    <button onclick="triggerVoiceCue('ambush')" class="px-3 py-2 bg-[#05070a] border border-[#ff0055]/60 hover:border-[#ff0055] hover:bg-[#ff0055]/10 text-[#ff0055] rounded text-xs font-mono text-left transition flex items-center justify-between">
-                        <span>🚨 Bagholdsangreb! (Løb)</span>
-                        <i class="fa-solid fa-play"></i>
-                    </button>
-                    <button onclick="triggerVoiceCue('stealth')" class="px-3 py-2 bg-[#05070a] border border-[#ffb703]/60 hover:border-[#ffb703] hover:bg-[#ffb703]/10 text-[#ffb703] rounded text-xs font-mono text-left transition flex items-center justify-between">
-                        <span>🤫 Snigeruter (Sænk fart)</span>
-                        <i class="fa-solid fa-play"></i>
-                    </button>
-                    <button onclick="triggerVoiceCue('loot')" class="px-3 py-2 bg-[#05070a] border border-[#00ff66]/60 hover:border-[#00ff66] hover:bg-[#00ff66]/10 text-[#00ff66] rounded text-xs font-mono text-left transition flex items-center justify-between">
-                        <span>💎 Ressource Sikret</span>
-                        <i class="fa-solid fa-play"></i>
-                    </button>
-                    <button onclick="triggerVoiceCue('status')" class="px-3 py-2 bg-[#05070a] border border-[#00f0ff]/60 hover:border-[#00f0ff] hover:bg-[#00f0ff]/10 text-[#00f0ff] rounded text-xs font-mono text-left transition flex items-center justify-between">
-                        <span>📡 Status Rapport</span>
-                        <i class="fa-solid fa-play"></i>
-                    </button>
-                    <button onclick="triggerVoiceCue('patrol')" class="px-3 py-2 bg-[#05070a] border border-gray-700 hover:border-gray-500 rounded text-xs font-mono text-left text-gray-300 transition flex items-center justify-between">
-                        <span>⚠️ Drone Patrulje</span>
-                        <i class="fa-solid fa-play"></i>
-                    </button>
-                    <button onclick="triggerVoiceCue('completed')" class="px-3 py-2 bg-[#05070a] border border-[#00ff66]/80 text-[#00ff66] rounded text-xs font-mono text-left transition flex items-center justify-between">
-                        <span>🏆 Mission Gennemført</span>
-                        <i class="fa-solid fa-play"></i>
-                    </button>
-                </div>
-
-                <!-- Custom Order input -->
-                <div class="flex gap-2">
-                    <input id="customTtsInput" type="text" placeholder="Skriv brugerdefineret stemmeordre..." class="flex-1 bg-[#05070a] border border-[#1a2333] px-3 py-2 text-sm font-mono rounded focus:outline-none focus:border-[#00f0ff] text-white">
-                    <button onclick="sendCustomTts()" class="px-4 py-2 bg-[#00f0ff] hover:bg-cyan-400 text-black font-bold font-mono rounded text-xs transition uppercase">
-                        Send Tale
-                    </button>
-                </div>
-            </div>
-
-            <!-- Event Log -->
-            <div class="bg-[#0c1017] border border-[#1a2333] rounded-lg p-5 flex-1 flex flex-col min-h-[220px]">
-                <div class="flex justify-between items-center mb-3">
-                    <h3 class="text-md font-bold uppercase tracking-wider text-gray-300 flex items-center gap-2">
-                        <i class="fa-solid fa-terminal text-[#00f0ff]"></i>
-                        Taktisk Hændelseslog & Historiefortælling
-                    </h3>
-                    <span class="text-xs font-mono text-gray-500">LIVE FEED</span>
-                </div>
-                <div id="missionLog" class="flex-1 bg-[#05070a] border border-[#1a2333] p-3 rounded font-mono text-xs overflow-y-auto max-h-56 space-y-2">
-                    <div class="text-gray-500">[00:00:00] Venter på at Felt-Enheden aktiveres og opretter forbindelse...</div>
-                </div>
-            </div>
-
-        </div>
-
-        <!-- RIGHT COLUMN: QR PAIRING & MISSION GENERATOR (5 Cols) -->
-        <div class="lg:col-span-5 flex flex-col space-y-6">
-            
-            <!-- Cloud Link / QR Code -->
-            <div class="bg-[#0c1017] border border-[#1a2333] rounded-lg p-5 text-center flex flex-col items-center">
-                <div class="flex items-center space-x-2 mb-2">
-                    <i class="fa-solid fa-tower-broadcast text-[#00f0ff]"></i>
-                    <h3 class="text-lg font-bold uppercase tracking-wider text-white">WebRTC Datalink (Mobil 5G / Wi-Fi)</h3>
-                </div>
-                
-                <p class="text-[11px] text-gray-300 mb-3 max-w-sm">
-                    Scan QR-koden med mobilens kamera, eller åbn siden på telefonen og indtast den 4-cifrede PIN nedenfor.
-                </p>
-
-                <!-- QR Mount -->
-                <div class="p-3 bg-white rounded-lg inline-block shadow-md relative">
-                    <div id="qrcode" class="w-44 h-44 flex items-center justify-center">
-                        <span class="text-xs text-gray-500 font-mono">Genererer QR...</span>
-                    </div>
-                </div>
-
-                <div class="mt-3 w-full bg-[#05070a] border border-[#1a2333] p-2 rounded text-left font-mono text-xs flex justify-between items-center">
-                    <span class="text-gray-400">PIN-kode til session:</span>
-                    <span id="sessionPinCode" class="text-[#00f0ff] font-bold text-lg tracking-widest">----</span>
-                </div>
-
-                <div class="mt-3 p-2 bg-[#05070a] border border-[#1a2333] rounded w-full flex items-center justify-between text-xs font-mono">
-                    <div class="flex items-center gap-2">
-                        <span id="qrStatusDot" class="w-2.5 h-2.5 rounded-full bg-[#ffb703] animate-pulse"></span>
-                        <span id="qrStatusText" class="text-gray-300">Venter på mobil...</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Procedurel Mission & Historie Setup -->
-            <div class="bg-[#0c1017] border border-[#1a2333] rounded-lg p-5">
-                <h3 class="text-md font-bold uppercase tracking-wider text-white mb-3 flex items-center gap-2">
-                    <i class="fa-solid fa-book-journal-whills text-[#00f0ff]"></i>
-                    Procedurel Historie Generator
-                </h3>
-
-                <div class="space-y-3 font-mono text-xs">
-                    <div>
-                        <label class="block text-gray-400 mb-1">Missions-Tema:</label>
-                        <select id="missionTypeSelect" class="w-full bg-[#05070a] border border-[#1a2333] p-2 rounded text-white focus:outline-none focus:border-[#00f0ff]">
-                            <option value="recon">Recon / Rekognoscering i Forbudt Zone</option>
-                            <option value="scavenge">Råstof Ekstraktion & Bjærgning</option>
-                            <option value="escape">Flugt fra Bio-Mech Zombier & Droner</option>
-                            <option value="tech">Infiltration af Automatiseret Fabrik</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <div class="flex justify-between text-gray-400 mb-1">
-                            <span>Vælg Din Gå/Løbe Distance:</span>
-                            <span id="distTargetLabel" class="text-[#00f0ff] font-bold">5.0 km</span>
-                        </div>
-                        <input id="distTargetSlider" type="range" min="1.0" max="15.0" step="0.5" value="5.0" class="w-full accent-[#00f0ff]">
-                        <div class="flex justify-between text-[10px] text-gray-500 mt-0.5">
-                            <span>1 km (Hurtig tur)</span>
-                            <span>5 km (Klassisk)</span>
-                            <span>15 km (Ekspedition)</span>
-                        </div>
-                    </div>
-
-                    <div class="pt-2">
-                        <button onclick="deployNewMission()" class="w-full py-2.5 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold tracking-wider rounded uppercase transition shadow-lg flex items-center justify-center gap-2">
-                            <i class="fa-solid fa-scroll"></i> Generer Ny Historie & Udrul
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-
-    </main>
-
-    <!-- ========================================== -->
-    <!-- VIEW 2: FIELD UNIT SENSOR (MOBILE VIEW)    -->
-    <!-- ========================================== -->
-    <main id="mobileView" class="view-hidden flex-1 p-4 flex-col justify-between max-w-md mx-auto w-full">
-        
-        <!-- Mobile Header Bar -->
-        <div class="flex items-center justify-between border-b border-[#1a2333] pb-3">
-            <div class="flex items-center space-x-2">
-                <span id="mobPulseDot" class="w-3 h-3 rounded-full bg-[#ffb703]"></span>
-                <span class="font-mono text-sm tracking-widest text-[#00f0ff] font-bold uppercase">FIELD SENSOR</span>
-            </div>
-            <div class="flex items-center space-x-2">
-                <button id="ttsMuteBtn" onclick="toggleMute()" class="w-8 h-8 rounded border border-gray-700 bg-[#0c1017] flex items-center justify-center text-[#00f0ff] text-sm">
-                    <i id="muteIcon" class="fa-solid fa-volume-high"></i>
+            <!-- Controls -->
+            <div class="space-y-3 font-mono">
+                <button id="gpsToggleBtn" onclick="toggleGpsTracking()" class="w-full py-4 bg-[#0c1017] border-2 border-[#00f0ff] hover:bg-[#00f0ff] hover:text-black text-[#00f0ff] font-bold rounded-lg uppercase tracking-wider text-sm transition shadow-lg flex items-center justify-center gap-2">
+                    <i id="gpsIcon" class="fa-solid fa-location-crosshairs text-lg"></i>
+                    <span id="gpsBtnText">Start Real GPS Tracking</span>
                 </button>
-                <span id="mobileLinkBadge" class="text-[10px] font-mono px-2 py-0.5 rounded bg-gray-900 border border-[#ffb703] text-[#ffb703]">
-                    IKKE FORBUNDET
-                </span>
-            </div>
-        </div>
 
-        <!-- PIN Connection Bar -->
-        <div id="mobPinBar" class="bg-[#0c1017] border border-[#1a2333] p-2.5 rounded my-2 flex gap-2 items-center text-xs font-mono">
-            <span class="text-gray-400">PIN:</span>
-            <input id="mobPinInput" type="text" placeholder="PIN" class="w-24 bg-[#05070a] border border-gray-700 px-2 py-1 rounded text-white text-center font-bold tracking-widest">
-            <button id="mobConnectBtn" onclick="connectToHostWithPin()" class="flex-1 py-1 bg-[#00f0ff] hover:bg-cyan-400 text-black font-bold rounded uppercase">
-                Kobl På
-            </button>
-        </div>
-
-        <!-- Active Story Mission Banner (Mobile) -->
-        <div class="bg-[#0c1017] border border-[#00f0ff]/40 rounded p-2.5 my-1 font-mono text-xs">
-            <div class="flex justify-between items-center mb-1">
-                <span class="text-[#00f0ff] font-bold uppercase">Aktiv Mission:</span>
-                <span id="mobTargetDist" class="text-white font-bold">5.0 km</span>
-            </div>
-            <div id="mobStoryTitle" class="text-[#ffd166] font-bold truncate">Initialiserer...</div>
-            <div class="w-full bg-[#05070a] border border-[#1a2333] h-2 rounded-full overflow-hidden mt-1.5 p-0.5">
-                <div id="mobProgressBar" class="h-full bg-gradient-to-r from-[#00f0ff] to-[#00ff66] w-0 rounded-full transition-all duration-300"></div>
-            </div>
-        </div>
-
-        <!-- Primary High-Contrast AMOLED Display -->
-        <div class="my-auto py-3 space-y-4 text-center">
-            <div>
-                <div class="text-xs font-mono text-gray-400 tracking-widest uppercase mb-1">AKTUEL HASTIGHED</div>
-                <div id="mobSpeedVal" class="text-7xl font-mono font-bold text-white tracking-tighter glow-accent">
-                    0.0
-                </div>
-                <div class="text-sm font-mono text-[#00f0ff] font-bold tracking-widest mt-1">KM/T</div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-4 pt-3 border-t border-b border-[#1a2333]/70 py-3">
-                <div>
-                    <div class="text-xs font-mono text-gray-400 uppercase">Distance</div>
-                    <div id="mobDistVal" class="text-4xl font-mono font-bold text-white">0.00</div>
-                    <div class="text-xs font-mono text-gray-500">KM</div>
-                </div>
-                <div>
-                    <div class="text-xs font-mono text-gray-400 uppercase">Tempo</div>
-                    <div id="mobPaceVal" class="text-4xl font-mono font-bold text-[#ffb703]">0'00"</div>
-                    <div class="text-xs font-mono text-gray-500">MIN/KM</div>
+                <div class="bg-[#0c1017] border border-[#1a2333] rounded-lg p-3 text-xs">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-gray-400 uppercase font-bold">Simulator (Styr farten manuelt):</span>
+                        <span id="simSpeedDisplay" class="text-[#00f0ff] font-mono font-bold">0.0 km/t</span>
+                    </div>
+                    <input id="simSpeedSlider" type="range" min="0" max="18" step="0.5" value="0" class="w-full accent-[#00f0ff] mb-2">
+                    <div class="flex gap-2">
+                        <button onclick="setSimSpeed(0)" class="flex-1 py-1 bg-[#05070a] border border-gray-700 rounded text-gray-300">Stop (0)</button>
+                        <button onclick="setSimSpeed(5.5)" class="flex-1 py-1 bg-[#05070a] border border-gray-700 rounded text-gray-300">Gå (5.5)</button>
+                        <button onclick="setSimSpeed(10.5)" class="flex-1 py-1 bg-[#05070a] border border-gray-700 rounded text-gray-300">Løb (10.5)</button>
+                    </div>
                 </div>
             </div>
 
-            <div class="bg-[#0c1017] border border-[#1a2333]/90 p-3 rounded-lg text-left">
-                <div class="text-[10px] font-mono text-[#00f0ff] uppercase flex items-center gap-1.5 mb-1">
-                    <i class="fa-solid fa-radio animate-pulse"></i>
-                    <span>Historie Lydordre i Headset:</span>
-                </div>
-                <div id="mobLastAudioMsg" class="text-xs font-mono text-gray-200 italic leading-snug">
-                    "Tænd GPS'en for at modtage din missions-briefing..."
-                </div>
-            </div>
-        </div>
+        </main>
 
-        <!-- Controls -->
-        <div class="space-y-3 font-mono">
-            <button id="gpsToggleBtn" onclick="toggleGpsTracking()" class="w-full py-4 bg-[#0c1017] border-2 border-[#00f0ff] hover:bg-[#00f0ff] hover:text-black text-[#00f0ff] font-bold rounded-lg uppercase tracking-wider text-sm transition shadow-lg flex items-center justify-center gap-2">
-                <i id="gpsIcon" class="fa-solid fa-location-crosshairs text-lg"></i>
-                <span id="gpsBtnText">Start Real GPS Tracking</span>
-            </button>
+        <!-- FOOTER BAR -->
+        <footer class="w-full bg-[#0c1017] border-t border-[#1a2333] px-4 py-2 text-center text-xs font-mono text-gray-500">
+            <span>AEGIS TACTICAL PROTOCOL • WEBRTC LIVE DATALINK • BASE OPS SYSTEM</span>
+        </footer>
 
-            <div class="bg-[#0c1017] border border-[#1a2333] rounded-lg p-3 text-xs">
-                <div class="flex justify-between items-center mb-2">
-                    <span class="text-gray-400 uppercase font-bold">Simulator (Styr farten manuelt):</span>
-                    <span id="simSpeedDisplay" class="text-[#00f0ff] font-mono font-bold">0.0 km/t</span>
-                </div>
-                <input id="simSpeedSlider" type="range" min="0" max="18" step="0.5" value="0" class="w-full accent-[#00f0ff] mb-2">
-                <div class="flex gap-2">
-                    <button onclick="setSimSpeed(0)" class="flex-1 py-1 bg-[#05070a] border border-gray-700 rounded text-gray-300">Stop (0)</button>
-                    <button onclick="setSimSpeed(5.5)" class="flex-1 py-1 bg-[#05070a] border border-gray-700 rounded text-gray-300">Gå (5.5)</button>
-                    <button onclick="setSimSpeed(10.5)" class="flex-1 py-1 bg-[#05070a] border border-gray-700 rounded text-gray-300">Løb (10.5)</button>
-                </div>
-            </div>
-        </div>
+    </div>
 
-    </main>
-
-    <!-- FOOTER BAR -->
-    <footer class="w-full bg-[#0c1017] border-t border-[#1a2333] px-4 py-2 text-center text-xs font-mono text-gray-500">
-        <span>AEGIS TACTICAL PROTOCOL • WEBRTC LIVE DATALINK • BASE OPS SYSTEM</span>
-    </footer>
-
-</div>
-
-<!-- MAIN ENGINE SCRIPT -->
-<script>
-    const state = {
-        role: 'host',
-        pin: '',
-        peer: null,
-        conn: null,
-        connected: false,
-        
-        speed: 0.0,
-        distance: 0.0,
-        pace: "0'00\"",
-        durationSeconds: 0,
-        timerInterval: null,
-        
-        targetDistance: 5.0,
-        objectiveName: "Operation Dark Horizon",
-        missionType: "recon",
-        missionComplete: false,
-        currentStory: null,
-        lastHarvestDistance: 0.0,
-        
-        resources: {
-            titanium: 15,
-            energy: 20,
-            electronics: 5,
-            dataCores: 0
-        },
-        facilities: {
-            radar: 1,
-            boots: 1,
-            defense: 1
-        },
-        
-        gpsWatchId: null,
-        lastCoords: null,
-        lastTimestamp: null,
-        gpsActive: false,
-        
-        simInterval: null,
-        simSpeed: 0.0,
-        
-        ttsMuted: false,
-        lastVoiceMessage: "",
-        wakeLock: null
-    };
-
-    const storyDatabase = {
-        recon: [
-            {
-                title: "Operation Skygge-Radar",
-                briefing: "Runner Five, her er Command. En ukendt krypteret radiofrekvens er blevet opfanget fra de forladte bunkere. Vi har brug for at du tilbagelægger {{DIST}} kilometer for at kalibrere basens pejl-antenner og scanne forsvarsbæltet.",
-                milestone25: "Godt arbejde. Du er 25% inde i ruten. Scanneren registrerer uregelmæssige varme-signaturer i området foran dig. Hold dig i konstant bevægelse og hold øjnene åbne.",
-                milestone50: "Halvvejs-markøren nået! Pas på! En autonom spejderdrone har fået fært af din terminal! Øg farten og kom ud af dens radar-kegle!",
-                milestone75: "75% gennemført. Dronen mistede sporet. Basens hovedreaktor har bekræftet dine koordinater. Begynd ekstraktions-fasen og vend snuden hjemad.",
-                completed: "Hovedkvarteret bekræfter fuld telemetri-download! Fremragende mission, Runner Five. Dataen er sikret, og ekstra forsvarsmoduler er låst op i smedjen!"
+    <!-- MAIN ENGINE SCRIPT -->
+    <script>
+        const state = {
+            role: 'host',
+            pin: '',
+            peer: null,
+            conn: null,
+            connected: false,
+            
+            speed: 0.0,
+            distance: 0.0,
+            pace: "0'00\"",
+            durationSeconds: 0,
+            timerInterval: null,
+            
+            targetDistance: 5.0,
+            objectiveName: "Operation Dark Horizon",
+            missionType: "recon",
+            missionComplete: false,
+            currentStory: null,
+            lastHarvestDistance: 0.0,
+            
+            resources: {
+                titanium: 15,
+                energy: 20,
+                electronics: 5,
+                dataCores: 0
             },
-            {
-                title: "Patrulje i Den Røde Zone",
-                briefing: "Opmærksomhed alle enheder. Perimetersensorerne omkring Sektor 9 er faldet ud. Du skal ud på en {{DIST}} kilometers patrulje for at etablere et nyt mesh-netværk til fods.",
-                milestone25: "Signalforbindelsen styrkes. Første relæstation er forbundet. Fortsæt dit tempo gennem terrænet.",
-                milestone50: "Advarsel! Du befinder dig lige nu i et gammelt minefelt af deaktiverede bio-sensorer. Hold et jævnt og stabilt tempo – ingen pludselige stop!",
-                milestone75: "Du er forbi faren og mangler kun en fjerdedel. Base Command har visuel kontakt på satellit-feedet.",
-                completed: "Missionen er fuldført! Mesh-netværket er fuldt operationelt, og basen er atter i sikkerhed. Velfortjent hvile!"
-            }
-        ],
-        scavenge: [
-            {
-                title: "Bjærgning af Faldet Kurerdrone",
-                briefing: "Nødmelding: En tung fragt-drone er styrtet ned cirka {{DIST}} kilometer ude. Den medbragte livsvigtige titanium- og energiceller til vores 3D-værksted. Ryk ud og bjærg ressourcerne!",
-                milestone25: "Du nærmer dig nedslagszonen. Vragdele ligger spredt. Husk at scanne jorden imens du går.",
-                milestone50: "Hovedvraget fundet! Flot løbet. Men pas på – bjærgnings-alarmen har tiltrukket lokale scavengers. Sæt farten op for at undslippe!",
-                milestone75: "Fragtcontainerne er sikkert synkroniseret til basens database. Du er tre fjerdedele igennem turen. Sidste spurt hjem!",
-                completed: "Lasten er sikret og overført til basens bank! Titanium og energilagre er fyldt op til næste opgradering."
-            }
-        ],
-        escape: [
-            {
-                title: "Bio-Mech Sværm Infiltration",
-                briefing: "Advarsel! En bølge af cybernetiske sværm-droner er brudt igennem yderhegnet. Du skal evakuere og lede sværmen {{DIST}} kilometer væk fra basens beboere!",
-                milestone25: "Sværmen følger efter dig! De reagerer på langsomme mål – hold farten oppe og kig dig ikke tilbage!",
-                milestone50: "Halvvejs! Sværmens alfaleder forsøger at afskære din rute. Løb! Spurt det bedste du har lært de næste to hundrede meter!",
-                milestone75: "Fremragende sprint! Du har rystet flokken af. Basens forsvarstårne har nu rent skudfelt mod sværmen. Gå det sidste stykke i sikkerhed.",
-                completed: "Sværmen er elimineret af basens tårne takket være din indsats! Du reddede udposten, Runner Five!"
-            }
-        ],
-        tech: [
-            {
-                title: "Reaktor Kerne Eksfiltration",
-                briefing: "Mission godkendt: En forladt atom-facilitet indeholder en intakt kvante-datakerne. Distance til udtrækningspunktet er {{DIST}} kilometer. Gør dig klar til afgang.",
-                milestone25: "Kernen er aktiveret og afgiver let stråling. Den kræver at du holder et stabilt march-tempo for ikke at overophede.",
-                milestone50: "Reaktoren stabiliseret ved 50%! Fantastisk udholdenhed. Basens forskere modtager allerede krystallinske data-telemetrier.",
-                milestone75: "Kun 25% tilbage til udtrækningszonen. Ekstraktionsfartøjet er undervejs for at dække din ryg.",
-                completed: "Datakernen er sikkert installeret i basens laboratorium! Sjældne Data Cores er blevet tilføjet til din konto."
-            }
-        ]
-    };
-
-    function generateStoryForMission(type, distance) {
-        const list = storyDatabase[type] || storyDatabase.recon;
-        const template = list[Math.floor(Math.random() * list.length)];
-        const distStr = distance.toFixed(1);
-
-        return {
-            title: template.title,
-            briefing: template.briefing.replace(/\{\{DIST\}\}/g, distStr),
-            milestone25: template.milestone25.replace(/\{\{DIST\}\}/g, distStr),
-            milestone50: template.milestone50.replace(/\{\{DIST\}\}/g, distStr),
-            milestone75: template.milestone75.replace(/\{\{DIST\}\}/g, distStr),
-            completed: template.completed.replace(/\{\{DIST\}\}/g, distStr),
-            triggered25: false,
-            triggered50: false,
-            triggered75: false,
-            triggeredEnd: false
+            facilities: {
+                radar: 1,
+                boots: 1,
+                defense: 1
+            },
+            
+            gpsWatchId: null,
+            lastCoords: null,
+            lastTimestamp: null,
+            gpsActive: false,
+            
+            simInterval: null,
+            simSpeed: 0.0,
+            
+            ttsMuted: false,
+            lastVoiceMessage: "",
+            wakeLock: null
         };
-    }
 
-    window.addEventListener('DOMContentLoaded', () => {
-        loadBaseGameData();
+        const storyDatabase = {
+            recon: [
+                {
+                    title: "Operation Skygge-Radar",
+                    briefing: "Runner Five, her er Command. En ukendt krypteret radiofrekvens er blevet opfanget fra de forladte bunkere. Vi har brug for at du tilbagelægger {{DIST}} kilometer for at kalibrere basens pejl-antenner og scanne forsvarsbæltet.",
+                    milestone25: "Godt arbejde. Du er 25% inde i ruten. Scanneren registrerer uregelmæssige varme-signaturer i området foran dig. Hold dig i konstant bevægelse og hold øjnene åbne.",
+                    milestone50: "Halvvejs-markøren nået! Pas på! En autonom spejderdrone har fået fært af din terminal! Øg farten og kom ud af dens radar-kegle!",
+                    milestone75: "75% gennemført. Dronen mistede sporet. Basens hovedreaktor har bekræftet dine koordinater. Begynd ekstraktions-fasen og vend snuden hjemad.",
+                    completed: "Hovedkvarteret bekræfter fuld telemetri-download! Fremragende mission, Runner Five. Dataen er sikret, og ekstra forsvarsmoduler er låst op i smedjen!"
+                },
+                {
+                    title: "Patrulje i Den Røde Zone",
+                    briefing: "Opmærksomhed alle enheder. Perimetersensorerne omkring Sektor 9 er faldet ud. Du skal ud på en {{DIST}} kilometers patrulje for at etablere et nyt mesh-netværk til fods.",
+                    milestone25: "Signalforbindelsen styrkes. Første relæstation er forbundet. Fortsæt dit tempo gennem terrænet.",
+                    milestone50: "Advarsel! Du befinder dig lige nu i et gammelt minefelt af deaktiverede bio-sensorer. Hold et jævnt og stabilt tempo – ingen pludselige stop!",
+                    milestone75: "Du er forbi faren og mangler kun en fjerdedel. Base Command har visuel kontakt på satellit-feedet.",
+                    completed: "Missionen er fuldført! Mesh-netværket er fuldt operationelt, og basen er atter i sikkerhed. Velfortjent hvile!"
+                }
+            ],
+            scavenge: [
+                {
+                    title: "Bjærgning af Faldet Kurerdrone",
+                    briefing: "Nødmelding: En tung fragt-drone er styrtet ned cirka {{DIST}} kilometer ude. Den medbragte livsvigtige titanium- og energiceller til vores 3D-værksted. Ryk ud og bjærg ressourcerne!",
+                    milestone25: "Du nærmer dig nedslagszonen. Vragdele ligger spredt. Husk at scanne jorden imens du går.",
+                    milestone50: "Hovedvraget fundet! Flot løbet. Men pas på – bjærgnings-alarmen har tiltrukket lokale scavengers. Sæt farten op for at undslippe!",
+                    milestone75: "Fragtcontainerne er sikkert synkroniseret til basens database. Du er tre fjerdedele igennem turen. Sidste spurt hjem!",
+                    completed: "Lasten er sikret og overført til basens bank! Titanium og energilagre er fyldt op til næste opgradering."
+                }
+            ],
+            escape: [
+                {
+                    title: "Bio-Mech Sværm Infiltration",
+                    briefing: "Advarsel! En bølge af cybernetiske sværm-droner er brudt igennem yderhegnet. Du skal evakuere og lede sværmen {{DIST}} kilometer væk fra basens beboere!",
+                    milestone25: "Sværmen følger efter dig! De reagerer på langsomme mål – hold farten oppe og kig dig ikke tilbage!",
+                    milestone50: "Halvvejs! Sværmens alfaleder forsøger at afskære din rute. Løb! Spurt det bedste du har lært de næste to hundrede meter!",
+                    milestone75: "Fremragende sprint! Du har rystet flokken af. Basens forsvarstårne har nu rent skudfelt mod sværmen. Gå det sidste stykke i sikkerhed.",
+                    completed: "Sværmen er elimineret af basens tårne takket være din indsats! Du reddede udposten, Runner Five!"
+                }
+            ],
+            tech: [
+                {
+                    title: "Reaktor Kerne Eksfiltration",
+                    briefing: "Mission godkendt: En forladt atom-facilitet indeholder en intakt kvante-datakerne. Distance til udtrækningspunktet er {{DIST}} kilometer. Gør dig klar til afgang.",
+                    milestone25: "Kernen er aktiveret og afgiver let stråling. Den kræver at du holder et stabilt march-tempo for ikke at overophede.",
+                    milestone50: "Reaktoren stabiliseret ved 50%! Fantastisk udholdenhed. Basens forskere modtager allerede krystallinske data-telemetrier.",
+                    milestone75: "Kun 25% tilbage til udtrækningszonen. Ekstraktionsfartøjet er undervejs for at dække din ryg.",
+                    completed: "Datakernen er sikkert installeret i basens laboratorium! Sjældne Data Cores er blevet tilføjet til din konto."
+                }
+            ]
+        };
 
-        const params = new URLSearchParams(window.location.search);
-        const targetPin = params.get('pin');
-        const requestedRole = params.get('role');
-        const isMobileBrowser = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || window.innerWidth < 768;
+        function generateStoryForMission(type, distance) {
+            const list = storyDatabase[type] || storyDatabase.recon;
+            const template = list[Math.floor(Math.random() * list.length)];
+            const distStr = distance.toFixed(1);
 
-        if (targetPin || requestedRole === 'field' || isMobileBrowser) {
-            setRole('field');
-            if (targetPin) {
-                const pinInp = document.getElementById('mobPinInput');
-                if (pinInp) pinInp.value = targetPin;
-                setTimeout(() => connectToHostWithPin(targetPin), 600);
-            }
-        } else {
-            setRole('host');
-            initHostPeer();
+            return {
+                title: template.title,
+                briefing: template.briefing.replace(/\{\{DIST\}\}/g, distStr),
+                milestone25: template.milestone25.replace(/\{\{DIST\}\}/g, distStr),
+                milestone50: template.milestone50.replace(/\{\{DIST\}\}/g, distStr),
+                milestone75: template.milestone75.replace(/\{\{DIST\}\}/g, distStr),
+                completed: template.completed.replace(/\{\{DIST\}\}/g, distStr),
+                triggered25: false,
+                triggered50: false,
+                triggered75: false,
+                triggeredEnd: false
+            };
         }
 
-        setupUIEventListeners();
-        renderBaseResources();
-        deployNewMission();
-    });
+        window.addEventListener('DOMContentLoaded', () => {
+            loadBaseGameData();
 
-    function loadBaseGameData() {
-        try {
-            const savedRes = localStorage.getItem('aegis_base_resources');
-            const savedFac = localStorage.getItem('aegis_base_facilities');
-            if (savedRes) state.resources = Object.assign(state.resources, JSON.parse(savedRes));
-            if (savedFac) state.facilities = Object.assign(state.facilities, JSON.parse(savedFac));
-        } catch(e) {}
-    }
+            const params = new URLSearchParams(window.location.search);
+            const targetPin = params.get('pin');
+            const requestedRole = params.get('role');
+            const isMobileBrowser = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || window.innerWidth < 768;
 
-    function saveBaseGameData() {
-        try {
-            localStorage.setItem('aegis_base_resources', JSON.stringify(state.resources));
-            localStorage.setItem('aegis_base_facilities', JSON.stringify(state.facilities));
-        } catch(e){}
-    }
-
-    function renderBaseResources() {
-        const elTit = document.getElementById('resTitanium');
-        const elNrg = document.getElementById('resEnergy');
-        const elEle = document.getElementById('resElectronics');
-        const elDat = document.getElementById('resDataCores');
-
-        if (elTit) elTit.innerText = state.resources.titanium;
-        if (elNrg) elNrg.innerText = state.resources.energy;
-        if (elEle) elEle.innerText = state.resources.electronics;
-        if (elDat) elDat.innerText = state.resources.dataCores;
-
-        const lRad = document.getElementById('lvlRadar');
-        const lBoo = document.getElementById('lvlBoots');
-        const lDef = document.getElementById('lvlDefense');
-        if (lRad) lRad.innerText = `Lvl ${state.facilities.radar}`;
-        if (lBoo) lBoo.innerText = `Lvl ${state.facilities.boots}`;
-        if (lDef) lDef.innerText = `Lvl ${state.facilities.defense}`;
-
-        const totalLevels = state.facilities.radar + state.facilities.boots + state.facilities.defense;
-        const badge = document.getElementById('baseLevelBadge');
-        if (badge) {
-            if (totalLevels < 5) badge.innerText = "MK I";
-            else if (totalLevels < 9) badge.innerText = "MK II";
-            else badge.innerText = "MK III ELITE";
-        }
-    }
-
-    function harvestResourcesFromMovement(currentDistance, currentSpeed) {
-        const delta = currentDistance - state.lastHarvestDistance;
-        if (delta >= 0.25) {
-            state.lastHarvestDistance = currentDistance;
-            const radarMultiplier = 1 + ((state.facilities.radar - 1) * 0.25);
-            
-            let titYield = Math.round((5 + Math.floor(Math.random() * 5)) * radarMultiplier);
-            let nrgYield = Math.round((4 + Math.floor(Math.random() * 4)) * radarMultiplier);
-            let eleYield = Math.round((2 + Math.floor(Math.random() * 3)) * radarMultiplier);
-            let coreYield = 0;
-
-            if (currentSpeed >= 9.0) {
-                titYield += 4;
-                if (Math.random() < 0.4 * state.facilities.boots) coreYield += 1;
-            }
-
-            if (state.missionType === 'scavenge') {
-                titYield = Math.round(titYield * 1.5);
-                nrgYield = Math.round(nrgYield * 1.5);
-            } else if (state.missionType === 'tech') {
-                eleYield = Math.round(eleYield * 1.8);
-            }
-
-            state.resources.titanium += titYield;
-            state.resources.energy += nrgYield;
-            state.resources.electronics += eleYield;
-            state.resources.dataCores += coreYield;
-
-            saveBaseGameData();
-            renderBaseResources();
-
-            let logMsg = `📦 RESSURCER INDSAMLET (250m): +${titYield} Titanium, +${nrgYield} Energi, +${eleYield} Elektronik`;
-            if (coreYield > 0) logMsg += ` 💎 +${coreYield} DATA CORE!`;
-            logMissionEvent(logMsg);
-        }
-    }
-
-    function upgradeFacility(type) {
-        if (type === 'radar') {
-            const costTit = 40 * state.facilities.radar;
-            const costNrg = 20 * state.facilities.radar;
-            if (state.resources.titanium >= costTit && state.resources.energy >= costNrg) {
-                state.resources.titanium -= costTit;
-                state.resources.energy -= costNrg;
-                state.facilities.radar++;
-                saveBaseGameData();
-                renderBaseResources();
-                logMissionEvent(`🛠️ VÆRKSTED: Radar opgraderet til Lvl ${state.facilities.radar}!`);
-                dispatchAudioCue("Basens radar opgraderet.");
+            if (targetPin || requestedRole === 'field' || isMobileBrowser) {
+                setRole('field');
+                if (targetPin) {
+                    const pinInp = document.getElementById('mobPinInput');
+                    if (pinInp) pinInp.value = targetPin;
+                    setTimeout(() => connectToHostWithPin(targetPin), 600);
+                }
             } else {
-                alert(`Mangler ressourcer! Kræver ${costTit} Titanium og ${costNrg} Energi.`);
-            }
-        } else if (type === 'boots') {
-            const costEle = 35 * state.facilities.boots;
-            const costTit = 30 * state.facilities.boots;
-            if (state.resources.electronics >= costEle && state.resources.titanium >= costTit) {
-                state.resources.electronics -= costEle;
-                state.resources.titanium -= costTit;
-                state.facilities.boots++;
-                saveBaseGameData();
-                renderBaseResources();
-                logMissionEvent(`🛠️ VÆRKSTED: Bioniske Støvler opgraderet til Lvl ${state.facilities.boots}!`);
-                dispatchAudioCue("Bioniske støvler opgraderet.");
-            } else {
-                alert(`Mangler ressourcer! Kræver ${costEle} Elektronik og ${costTit} Titanium.`);
-            }
-        } else if (type === 'defense') {
-            const costNrg = 50 * state.facilities.defense;
-            const costCore = 2 * state.facilities.defense;
-            if (state.resources.energy >= costNrg && state.resources.dataCores >= costCore) {
-                state.resources.energy -= costNrg;
-                state.resources.dataCores -= costCore;
-                state.facilities.defense++;
-                saveBaseGameData();
-                renderBaseResources();
-                logMissionEvent(`🛠️ VÆRKSTED: Forsvarsperimeter forstærket til Lvl ${state.facilities.defense}!`);
-                dispatchAudioCue("Basens forsvarsskærm forstærket.");
-            } else {
-                alert(`Mangler ressourcer! Kræver ${costNrg} Energi og ${costCore} Data Cores.`);
-            }
-        }
-    }
-
-    function setRole(newRole) {
-        state.role = newRole;
-        const hostView = document.getElementById('hostView');
-        const mobileView = document.getElementById('mobileView');
-        const toggleRoleBtn = document.getElementById('toggleRoleBtn');
-        const systemModeBadge = document.getElementById('systemModeBadge');
-
-        if (newRole === 'host') {
-            hostView.className = "view-active-grid flex-1 p-4 md:p-6 grid-cols-1 lg:grid-cols-12 gap-6 max-w-7xl mx-auto w-full";
-            mobileView.className = "view-hidden flex-1 p-4 flex-col justify-between max-w-md mx-auto w-full";
-            
-            toggleRoleBtn.innerText = "SKIFT TIL MOBIL VISNING";
-            systemModeBadge.innerText = "HOST COMMAND [PC]";
-            systemModeBadge.className = "text-[#00f0ff] font-bold";
-            if (!state.peer) initHostPeer();
-        } else {
-            hostView.className = "view-hidden flex-1 p-4 md:p-6 grid-cols-1 lg:grid-cols-12 gap-6 max-w-7xl mx-auto w-full";
-            mobileView.className = "view-active-flex flex-1 p-4 flex-col justify-between max-w-md mx-auto w-full";
-            
-            toggleRoleBtn.innerText = "SKIFT TIL PC HOST";
-            systemModeBadge.innerText = "FIELD UNIT [MOBILE]";
-            systemModeBadge.className = "text-[#00ff66] font-bold";
-            initFieldPeer();
-            requestWakeLock();
-        }
-    }
-
-    async function requestWakeLock() {
-        if ('wakeLock' in navigator) {
-            try {
-                state.wakeLock = await navigator.wakeLock.request('screen');
-            } catch (e) {}
-        }
-    }
-
-    function getPeerIdForPin(pin) {
-        return `aegis-runner-host-${pin}`;
-    }
-
-    function initHostPeer() {
-        if (state.peer) return;
-
-        state.pin = Math.floor(1000 + Math.random() * 9000).toString();
-        const pinDisplay = document.getElementById('sessionPinCode');
-        if (pinDisplay) pinDisplay.innerText = state.pin;
-
-        renderQrCode(state.pin);
-        updateConnStatus("OPRETTER SIGNAL-LINK...", "warn");
-
-        const myHostId = getPeerIdForPin(state.pin);
-        state.peer = new Peer(myHostId, { debug: 1 });
-
-        state.peer.on('open', () => {
-            updateConnStatus("VENTER PÅ FELT-ENHED", "warn");
-            logMissionEvent(`Host klar på nettet. PIN: ${state.pin}`);
-        });
-
-        state.peer.on('connection', (connection) => {
-            state.conn = connection;
-            setupConnectionHandlers();
-        });
-
-        state.peer.on('error', (err) => {
-            if (err.type === 'unavailable-id') {
-                state.peer = null;
+                setRole('host');
                 initHostPeer();
             }
+
+            setupUIEventListeners();
+            renderBaseResources();
+            deployNewMission();
         });
-    }
 
-    function initFieldPeer() {
-        if (state.peer) return;
-        state.peer = new Peer(null, { debug: 1 });
-        state.peer.on('open', () => {
-            const badge = document.getElementById('mobileLinkBadge');
-            if (badge && !state.connected) {
-                badge.innerText = "KLAR TIL FORBINDELSE";
-                badge.className = "text-[10px] font-mono px-2 py-0.5 rounded bg-gray-900 border border-[#00f0ff] text-[#00f0ff]";
-            }
-        });
-    }
-
-    function connectToHostWithPin(overridePin) {
-        const inputVal = overridePin || document.getElementById('mobPinInput').value.trim();
-        if (!inputVal) return;
-
-        const targetHostId = getPeerIdForPin(inputVal);
-        const badge = document.getElementById('mobileLinkBadge');
-        
-        if (badge) {
-            badge.innerText = "OPRETTER FORBINDELSE...";
-            badge.className = "text-[10px] font-mono px-2 py-0.5 rounded bg-gray-900 border border-[#ffb703] text-[#ffb703]";
+        function loadBaseGameData() {
+            try {
+                const savedRes = localStorage.getItem('aegis_base_resources');
+                const savedFac = localStorage.getItem('aegis_base_facilities');
+                if (savedRes) state.resources = Object.assign(state.resources, JSON.parse(savedRes));
+                if (savedFac) state.facilities = Object.assign(state.facilities, JSON.parse(savedFac));
+            } catch(e) {}
         }
 
-        if (!state.peer) {
+        function saveBaseGameData() {
+            try {
+                localStorage.setItem('aegis_base_resources', JSON.stringify(state.resources));
+                localStorage.setItem('aegis_base_facilities', JSON.stringify(state.facilities));
+            } catch(e){}
+        }
+
+        function renderBaseResources() {
+            const elTit = document.getElementById('resTitanium');
+            const elNrg = document.getElementById('resEnergy');
+            const elEle = document.getElementById('resElectronics');
+            const elDat = document.getElementById('resDataCores');
+
+            if (elTit) elTit.innerText = state.resources.titanium;
+            if (elNrg) elNrg.innerText = state.resources.energy;
+            if (elEle) elEle.innerText = state.resources.electronics;
+            if (elDat) elDat.innerText = state.resources.dataCores;
+
+            const lRad = document.getElementById('lvlRadar');
+            const lBoo = document.getElementById('lvlBoots');
+            const lDef = document.getElementById('lvlDefense');
+            if (lRad) lRad.innerText = `Lvl ${state.facilities.radar}`;
+            if (lBoo) lBoo.innerText = `Lvl ${state.facilities.boots}`;
+            if (lDef) lDef.innerText = `Lvl ${state.facilities.defense}`;
+
+            const totalLevels = state.facilities.radar + state.facilities.boots + state.facilities.defense;
+            const badge = document.getElementById('baseLevelBadge');
+            if (badge) {
+                if (totalLevels < 5) badge.innerText = "MK I";
+                else if (totalLevels < 9) badge.innerText = "MK II";
+                else badge.innerText = "MK III ELITE";
+            }
+        }
+
+        function harvestResourcesFromMovement(currentDistance, currentSpeed) {
+            const delta = currentDistance - state.lastHarvestDistance;
+            if (delta >= 0.25) {
+                state.lastHarvestDistance = currentDistance;
+                const radarMultiplier = 1 + ((state.facilities.radar - 1) * 0.25);
+                
+                let titYield = Math.round((5 + Math.floor(Math.random() * 5)) * radarMultiplier);
+                let nrgYield = Math.round((4 + Math.floor(Math.random() * 4)) * radarMultiplier);
+                let eleYield = Math.round((2 + Math.floor(Math.random() * 3)) * radarMultiplier);
+                let coreYield = 0;
+
+                if (currentSpeed >= 9.0) {
+                    titYield += 4;
+                    if (Math.random() < 0.4 * state.facilities.boots) coreYield += 1;
+                }
+
+                if (state.missionType === 'scavenge') {
+                    titYield = Math.round(titYield * 1.5);
+                    nrgYield = Math.round(nrgYield * 1.5);
+                } else if (state.missionType === 'tech') {
+                    eleYield = Math.round(eleYield * 1.8);
+                }
+
+                state.resources.titanium += titYield;
+                state.resources.energy += nrgYield;
+                state.resources.electronics += eleYield;
+                state.resources.dataCores += coreYield;
+
+                saveBaseGameData();
+                renderBaseResources();
+
+                let logMsg = `📦 RESSURCER INDSAMLET (250m): +${titYield} Titanium, +${nrgYield} Energi, +${eleYield} Elektronik`;
+                if (coreYield > 0) logMsg += ` 💎 +${coreYield} DATA CORE!`;
+                logMissionEvent(logMsg);
+            }
+        }
+
+        function upgradeFacility(type) {
+            if (type === 'radar') {
+                const costTit = 40 * state.facilities.radar;
+                const costNrg = 20 * state.facilities.radar;
+                if (state.resources.titanium >= costTit && state.resources.energy >= costNrg) {
+                    state.resources.titanium -= costTit;
+                    state.resources.energy -= costNrg;
+                    state.facilities.radar++;
+                    saveBaseGameData();
+                    renderBaseResources();
+                    logMissionEvent(`🛠️ VÆRKSTED: Radar opgraderet til Lvl ${state.facilities.radar}!`);
+                    dispatchAudioCue("Basens radar opgraderet.");
+                } else {
+                    alert(`Mangler ressourcer! Kræver ${costTit} Titanium og ${costNrg} Energi.`);
+                }
+            } else if (type === 'boots') {
+                const costEle = 35 * state.facilities.boots;
+                const costTit = 30 * state.facilities.boots;
+                if (state.resources.electronics >= costEle && state.resources.titanium >= costTit) {
+                    state.resources.electronics -= costEle;
+                    state.resources.titanium -= costTit;
+                    state.facilities.boots++;
+                    saveBaseGameData();
+                    renderBaseResources();
+                    logMissionEvent(`🛠️ VÆRKSTED: Bioniske Støvler opgraderet til Lvl ${state.facilities.boots}!`);
+                    dispatchAudioCue("Bioniske støvler opgraderet.");
+                } else {
+                    alert(`Mangler ressourcer! Kræver ${costEle} Elektronik og ${costTit} Titanium.`);
+                }
+            } else if (type === 'defense') {
+                const costNrg = 50 * state.facilities.defense;
+                const costCore = 2 * state.facilities.defense;
+                if (state.resources.energy >= costNrg && state.resources.dataCores >= costCore) {
+                    state.resources.energy -= costNrg;
+                    state.resources.dataCores -= costCore;
+                    state.facilities.defense++;
+                    saveBaseGameData();
+                    renderBaseResources();
+                    logMissionEvent(`🛠️ VÆRKSTED: Forsvarsperimeter forstærket til Lvl ${state.facilities.defense}!`);
+                    dispatchAudioCue("Basens forsvarsskærm forstærket.");
+                } else {
+                    alert(`Mangler ressourcer! Kræver ${costNrg} Energi og ${costCore} Data Cores.`);
+                }
+            }
+        }
+
+        function setRole(newRole) {
+            state.role = newRole;
+            const hostView = document.getElementById('hostView');
+            const mobileView = document.getElementById('mobileView');
+            const toggleRoleBtn = document.getElementById('toggleRoleBtn');
+            const systemModeBadge = document.getElementById('systemModeBadge');
+
+            if (newRole === 'host') {
+                hostView.className = "view-active-grid flex-1 p-4 md:p-6 grid-cols-1 lg:grid-cols-12 gap-6 max-w-7xl mx-auto w-full";
+                mobileView.className = "view-hidden flex-1 p-4 flex-col justify-between max-w-md mx-auto w-full";
+                
+                toggleRoleBtn.innerText = "SKIFT TIL MOBIL VISNING";
+                systemModeBadge.innerText = "HOST COMMAND [PC]";
+                systemModeBadge.className = "text-[#00f0ff] font-bold";
+                if (!state.peer) initHostPeer();
+            } else {
+                hostView.className = "view-hidden flex-1 p-4 md:p-6 grid-cols-1 lg:grid-cols-12 gap-6 max-w-7xl mx-auto w-full";
+                mobileView.className = "view-active-flex flex-1 p-4 flex-col justify-between max-w-md mx-auto w-full";
+                
+                toggleRoleBtn.innerText = "SKIFT TIL PC HOST";
+                systemModeBadge.innerText = "FIELD UNIT [MOBILE]";
+                systemModeBadge.className = "text-[#00ff66] font-bold";
+                initFieldPeer();
+                requestWakeLock();
+            }
+        }
+
+        async function requestWakeLock() {
+            if ('wakeLock' in navigator) {
+                try {
+                    state.wakeLock = await navigator.wakeLock.request('screen');
+                } catch (e) {}
+            }
+        }
+
+        function getPeerIdForPin(pin) {
+            return `aegis-runner-host-${pin}`;
+        }
+
+        function initHostPeer() {
+            if (state.peer) return;
+
+            state.pin = Math.floor(1000 + Math.random() * 9000).toString();
+            const pinDisplay = document.getElementById('sessionPinCode');
+            if (pinDisplay) pinDisplay.innerText = state.pin;
+
+            renderQrCode(state.pin);
+            updateConnStatus("OPRETTER SIGNAL-LINK...", "warn");
+
+            const myHostId = getPeerIdForPin(state.pin);
+            state.peer = new Peer(myHostId, { debug: 1 });
+
+            state.peer.on('open', () => {
+                updateConnStatus("VENTER PÅ FELT-ENHED", "warn");
+                logMissionEvent(`Host klar på nettet. PIN: ${state.pin}`);
+            });
+
+            state.peer.on('connection', (connection) => {
+                state.conn = connection;
+                setupConnectionHandlers();
+            });
+
+            state.peer.on('error', (err) => {
+                if (err.type === 'unavailable-id') {
+                    state.peer = null;
+                    initHostPeer();
+                }
+            });
+        }
+
+        function initFieldPeer() {
+            if (state.peer) return;
             state.peer = new Peer(null, { debug: 1 });
-            state.peer.on('open', () => dialHost(targetHostId));
-        } else {
-            dialHost(targetHostId);
-        }
-    }
-
-    function dialHost(targetHostId) {
-        if (state.conn) {
-            try { state.conn.close(); } catch(e){}
-        }
-        state.conn = state.peer.connect(targetHostId, { reliable: true });
-        setupConnectionHandlers();
-    }
-
-    function setupConnectionHandlers() {
-        if (!state.conn) return;
-
-        state.conn.on('open', () => {
-            state.connected = true;
-            if (state.role === 'host') {
-                updateConnStatus("FORBUNDET TIL FELT-ENHED", "success");
-                updateQrStatusConnected();
-                logMissionEvent("Mobil felt-enhed tilsluttet via WebRTC 5G link.");
-                startMissionTimer();
-                sendMissionObjectiveToMobile();
-            } else {
-                updateConnStatus("FORBUNDET TIL PC", "success");
+            state.peer.on('open', () => {
                 const badge = document.getElementById('mobileLinkBadge');
-                const dot = document.getElementById('mobPulseDot');
-                if (badge) {
-                    badge.innerText = "FORBUNDET";
-                    badge.className = "text-[10px] font-mono px-2 py-0.5 rounded bg-gray-900 border border-[#00ff66] text-[#00ff66]";
+                if (badge && !state.connected) {
+                    badge.innerText = "KLAR TIL FORBINDELSE";
+                    badge.className = "text-[10px] font-mono px-2 py-0.5 rounded bg-gray-900 border border-[#00f0ff] text-[#00f0ff]";
                 }
-                if (dot) dot.className = "w-3 h-3 rounded-full bg-[#00ff66] animate-ping";
-                speakVoice("Forbindelse til PC bekræftet. Venter på GPS aktivering.");
-            }
-        });
-
-        state.conn.on('data', (data) => {
-            handleIncomingPacket(data);
-        });
-
-        state.conn.on('close', () => {
-            state.connected = false;
-            if (state.role === 'host') {
-                updateConnStatus("MISTET FORBINDELSE", "danger");
-                logMissionEvent("⚠️ Forbindelse til mobil enhed afbrudt.");
-            } else {
-                const badge = document.getElementById('mobileLinkBadge');
-                if (badge) {
-                    badge.innerText = "AFBRUDT";
-                    badge.className = "text-[10px] font-mono px-2 py-0.5 rounded bg-gray-900 border border-[#ff0055] text-[#ff0055]";
-                }
-            }
-        });
-    }
-
-    function sendPacket(type, payload) {
-        if (!state.conn || !state.connected) return;
-        try {
-            state.conn.send({
-                senderRole: state.role,
-                type: type,
-                payload: payload,
-                timestamp: Date.now()
             });
-        } catch (e){}
-    }
+        }
 
-    function handleIncomingPacket(packet) {
-        if (!packet) return;
+        function connectToHostWithPin(overridePin) {
+            const inputVal = overridePin || document.getElementById('mobPinInput').value.trim();
+            if (!inputVal) return;
 
-        switch (packet.type) {
-            case 'TELEMETRY':
+            const targetHostId = getPeerIdForPin(inputVal);
+            const badge = document.getElementById('mobileLinkBadge');
+            
+            if (badge) {
+                badge.innerText = "OPRETTER FORBINDELSE...";
+                badge.className = "text-[10px] font-mono px-2 py-0.5 rounded bg-gray-900 border border-[#ffb703] text-[#ffb703]";
+            }
+
+            if (!state.peer) {
+                state.peer = new Peer(null, { debug: 1 });
+                state.peer.on('open', () => dialHost(targetHostId));
+            } else {
+                dialHost(targetHostId);
+            }
+        }
+
+        function dialHost(targetHostId) {
+            if (state.conn) {
+                try { state.conn.close(); } catch(e){}
+            }
+            state.conn = state.peer.connect(targetHostId, { reliable: true });
+            setupConnectionHandlers();
+        }
+
+        function setupConnectionHandlers() {
+            if (!state.conn) return;
+
+            state.conn.on('open', () => {
+                state.connected = true;
                 if (state.role === 'host') {
-                    updateHostTelemetry(packet.payload);
-                    checkStoryMilestones(packet.payload);
-                    harvestResourcesFromMovement(packet.payload.distance, packet.payload.speed);
+                    updateConnStatus("FORBUNDET TIL FELT-ENHED", "success");
+                    updateQrStatusConnected();
+                    logMissionEvent("Mobil felt-enhed tilsluttet via WebRTC 5G link.");
+                    startMissionTimer();
+                    sendMissionObjectiveToMobile();
+                } else {
+                    updateConnStatus("FORBUNDET TIL PC", "success");
+                    const badge = document.getElementById('mobileLinkBadge');
+                    const dot = document.getElementById('mobPulseDot');
+                    if (badge) {
+                        badge.innerText = "FORBUNDET";
+                        badge.className = "text-[10px] font-mono px-2 py-0.5 rounded bg-gray-900 border border-[#00ff66] text-[#00ff66]";
+                    }
+                    if (dot) dot.className = "w-3 h-3 rounded-full bg-[#00ff66] animate-ping";
+                    speakVoice("Forbindelse til PC bekræftet. Venter på GPS aktivering.");
                 }
-                break;
-
-            case 'VOICE_CUE':
-                if (state.role === 'field') {
-                    speakVoice(packet.payload.text);
-                    const msgBox = document.getElementById('mobLastAudioMsg');
-                    if (msgBox) msgBox.innerText = `"${packet.payload.text}"`;
-                }
-                break;
-
-            case 'OBJECTIVE_SYNC':
-                state.targetDistance = packet.payload.target;
-                state.objectiveName = packet.payload.name;
-                state.currentStory = packet.payload.story;
-
-                const mobTarget = document.getElementById('mobTargetDist');
-                const mobTitle = document.getElementById('mobStoryTitle');
-                if (mobTarget) mobTarget.innerText = `${state.targetDistance.toFixed(1)} km`;
-                if (mobTitle && state.currentStory) mobTitle.innerText = state.currentStory.title;
-                break;
-
-            case 'GPS_STARTED':
-                if (state.role === 'host' && state.currentStory) {
-                    logMissionEvent(`🚀 MISSION STARTET: "${state.currentStory.title}"`);
-                    dispatchAudioCue(state.currentStory.briefing);
-                }
-                break;
-        }
-    }
-
-    function updateQrStatusConnected() {
-        const qrStatusDot = document.getElementById('qrStatusDot');
-        const qrStatusText = document.getElementById('qrStatusText');
-        const hostPulse = document.getElementById('hostPulseDot');
-        if (qrStatusDot && qrStatusText) {
-            qrStatusDot.className = "w-2.5 h-2.5 rounded-full bg-[#00ff66]";
-            qrStatusText.innerText = "Mobil Forbundet!";
-        }
-        if (hostPulse) hostPulse.className = "w-2.5 h-2.5 rounded-full bg-[#00ff66] animate-ping";
-    }
-
-    function renderQrCode(pin) {
-        const qrContainer = document.getElementById('qrcode');
-        if (!qrContainer) return;
-        qrContainer.innerHTML = "";
-
-        const originUrl = window.location.origin + window.location.pathname;
-        const fullLink = `${originUrl}?role=field&pin=${pin}`;
-
-        try {
-            new QRCode(qrContainer, {
-                text: fullLink,
-                width: 176,
-                height: 176,
-                colorDark: "#05070a",
-                colorLight: "#ffffff",
-                correctLevel: QRCode.CorrectLevel.M
             });
-        } catch (err) {
-            qrContainer.innerHTML = `<span class="text-xs font-mono text-[#00f0ff]">PIN: ${pin}</span>`;
+
+            state.conn.on('data', (data) => {
+                handleIncomingPacket(data);
+            });
+
+            state.conn.on('close', () => {
+                state.connected = false;
+                if (state.role === 'host') {
+                    updateConnStatus("MISTET FORBINDELSE", "danger");
+                    logMissionEvent("⚠️ Forbindelse til mobil enhed afbrudt.");
+                } else {
+                    const badge = document.getElementById('mobileLinkBadge');
+                    if (badge) {
+                        badge.innerText = "AFBRUDT";
+                        badge.className = "text-[10px] font-mono px-2 py-0.5 rounded bg-gray-900 border border-[#ff0055] text-[#ff0055]";
+                    }
+                }
+            });
         }
-    }
 
-    function toggleGpsTracking() {
-        const btnText = document.getElementById('gpsBtnText');
-        const gpsIcon = document.getElementById('gpsIcon');
+        function sendPacket(type, payload) {
+            if (!state.conn || !state.connected) return;
+            try {
+                state.conn.send({
+                    senderRole: state.role,
+                    type: type,
+                    payload: payload,
+                    timestamp: Date.now()
+                });
+            } catch (e){}
+        }
 
-        if (!state.gpsActive) {
-            if (!navigator.geolocation) {
-                speakVoice("Fejl: GPS er ikke understøttet i denne browser.");
-                return;
+        function handleIncomingPacket(packet) {
+            if (!packet) return;
+
+            switch (packet.type) {
+                case 'TELEMETRY':
+                    if (state.role === 'host') {
+                        updateHostTelemetry(packet.payload);
+                        checkStoryMilestones(packet.payload);
+                        harvestResourcesFromMovement(packet.payload.distance, packet.payload.speed);
+                    }
+                    break;
+
+                case 'VOICE_CUE':
+                    if (state.role === 'field') {
+                        speakVoice(packet.payload.text);
+                        const msgBox = document.getElementById('mobLastAudioMsg');
+                        if (msgBox) msgBox.innerText = `"${packet.payload.text}"`;
+                    }
+                    break;
+
+                case 'OBJECTIVE_SYNC':
+                    state.targetDistance = packet.payload.target;
+                    state.objectiveName = packet.payload.name;
+                    state.currentStory = packet.payload.story;
+
+                    const mobTarget = document.getElementById('mobTargetDist');
+                    const mobTitle = document.getElementById('mobStoryTitle');
+                    if (mobTarget) mobTarget.innerText = `${state.targetDistance.toFixed(1)} km`;
+                    if (mobTitle && state.currentStory) mobTitle.innerText = state.currentStory.title;
+                    break;
+
+                case 'GPS_STARTED':
+                    if (state.role === 'host' && state.currentStory) {
+                        logMissionEvent(`🚀 MISSION STARTET: "${state.currentStory.title}"`);
+                        dispatchAudioCue(state.currentStory.briefing);
+                    }
+                    break;
             }
+        }
 
-            state.gpsWatchId = navigator.geolocation.watchPosition(
-                onGpsSuccess,
-                onGpsError,
-                { enableHighAccuracy: true, maximumAge: 1000, timeout: 10000 }
-            );
+        function updateQrStatusConnected() {
+            const qrStatusDot = document.getElementById('qrStatusDot');
+            const qrStatusText = document.getElementById('qrStatusText');
+            const hostPulse = document.getElementById('hostPulseDot');
+            if (qrStatusDot && qrStatusText) {
+                qrStatusDot.className = "w-2.5 h-2.5 rounded-full bg-[#00ff66]";
+                qrStatusText.innerText = "Mobil Forbundet!";
+            }
+            if (hostPulse) hostPulse.className = "w-2.5 h-2.5 rounded-full bg-[#00ff66] animate-ping";
+        }
 
-            state.gpsActive = true;
-            btnText.innerText = "Stop GPS Tracking";
-            gpsIcon.className = "fa-solid fa-circle-stop text-[#ff0055]";
+        function renderQrCode(pin) {
+            const qrContainer = document.getElementById('qrcode');
+            if (!qrContainer) return;
+            qrContainer.innerHTML = "";
 
-            sendPacket('GPS_STARTED', { started: true });
-            if (state.currentStory) {
-                speakVoice(state.currentStory.briefing);
-                const msgBox = document.getElementById('mobLastAudioMsg');
-                if (msgBox) msgBox.innerText = `"${state.currentStory.briefing}"`;
+            const originUrl = window.location.origin + window.location.pathname;
+            const fullLink = `${originUrl}?role=field&pin=${pin}`;
+
+            try {
+                new QRCode(qrContainer, {
+                    text: fullLink,
+                    width: 176,
+                    height: 176,
+                    colorDark: "#05070a",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.M
+                });
+            } catch (err) {
+                qrContainer.innerHTML = `<span class="text-xs font-mono text-[#00f0ff]">PIN: ${pin}</span>`;
+            }
+        }
+
+        function toggleGpsTracking() {
+            const btnText = document.getElementById('gpsBtnText');
+            const gpsIcon = document.getElementById('gpsIcon');
+
+            if (!state.gpsActive) {
+                if (!navigator.geolocation) {
+                    speakVoice("Fejl: GPS er ikke understøttet i denne browser.");
+                    return;
+                }
+
+                state.gpsWatchId = navigator.geolocation.watchPosition(
+                    onGpsSuccess,
+                    onGpsError,
+                    { enableHighAccuracy: true, maximumAge: 1000, timeout: 10000 }
+                );
+
+                state.gpsActive = true;
+                btnText.innerText = "Stop GPS Tracking";
+                gpsIcon.className = "fa-solid fa-circle-stop text-[#ff0055]";
+
+                sendPacket('GPS_STARTED', { started: true });
+                if (state.currentStory) {
+                    speakVoice(state.currentStory.briefing);
+                    const msgBox = document.getElementById('mobLastAudioMsg');
+                    if (msgBox) msgBox.innerText = `"${state.currentStory.briefing}"`;
+                } else {
+                    speakVoice("GPS tracking aktiveret. Søger satellitter.");
+                }
             } else {
-                speakVoice("GPS tracking aktiveret. Søger satellitter.");
+                if (state.gpsWatchId) navigator.geolocation.clearWatch(state.gpsWatchId);
+                state.gpsActive = false;
+                btnText.innerText = "Start Real GPS Tracking";
+                gpsIcon.className = "fa-solid fa-location-crosshairs text-lg";
+                speakVoice("GPS tracking afbrudt.");
             }
-        } else {
-            if (state.gpsWatchId) navigator.geolocation.clearWatch(state.gpsWatchId);
-            state.gpsActive = false;
-            btnText.innerText = "Start Real GPS Tracking";
-            gpsIcon.className = "fa-solid fa-location-crosshairs text-lg";
-            speakVoice("GPS tracking afbrudt.");
-        }
-    }
-
-    function onGpsSuccess(position) {
-        const lat = position.coords.latitude;
-        const lon = position.coords.longitude;
-        const timestamp = position.timestamp;
-        let currentSpeed = 0;
-
-        if (position.coords.speed !== null && !isNaN(position.coords.speed)) {
-            currentSpeed = position.coords.speed * 3.6;
         }
 
-        if (state.lastCoords) {
-            const distIncrement = calculateHaversineDistance(
-                state.lastCoords.lat,
-                state.lastCoords.lon,
-                lat,
-                lon
-            );
+        function onGpsSuccess(position) {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            const timestamp = position.timestamp;
+            let currentSpeed = 0;
 
-            if (distIncrement > 0.002) {
-                state.distance += distIncrement;
-                if (currentSpeed === 0 && state.lastTimestamp) {
-                    const timeDeltaHours = (timestamp - state.lastTimestamp) / 3600000;
-                    if (timeDeltaHours > 0) currentSpeed = distIncrement / timeDeltaHours;
+            if (position.coords.speed !== null && !isNaN(position.coords.speed)) {
+                currentSpeed = position.coords.speed * 3.6;
+            }
+
+            if (state.lastCoords) {
+                const distIncrement = calculateHaversineDistance(
+                    state.lastCoords.lat,
+                    state.lastCoords.lon,
+                    lat,
+                    lon
+                );
+
+                if (distIncrement > 0.002) {
+                    state.distance += distIncrement;
+                    if (currentSpeed === 0 && state.lastTimestamp) {
+                        const timeDeltaHours = (timestamp - state.lastTimestamp) / 3600000;
+                        if (timeDeltaHours > 0) currentSpeed = distIncrement / timeDeltaHours;
+                    }
                 }
             }
-        }
 
-        state.lastCoords = { lat, lon };
-        state.lastTimestamp = timestamp;
-        state.speed = Math.max(0, currentSpeed);
+            state.lastCoords = { lat, lon };
+            state.lastTimestamp = timestamp;
+            state.speed = Math.max(0, currentSpeed);
 
-        syncAndBroadcastTelemetry();
-    }
-
-    function onGpsError(err) {
-        console.warn("GPS Warning:", err.message);
-    }
-
-    function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
-        const R = 6371;
-        const dLat = (lat2 - lat1) * Math.PI / 180;
-        const dLon = (lon2 - lon1) * Math.PI / 180;
-        const a =
-            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-            Math.sin(dLon / 2) * Math.sin(dLon / 2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        return R * c;
-    }
-
-    function setSimSpeed(speedVal) {
-        document.getElementById('simSpeedSlider').value = speedVal;
-        document.getElementById('simSpeedDisplay').innerText = `${speedVal.toFixed(1)} km/t`;
-        state.simSpeed = parseFloat(speedVal);
-
-        if (state.simSpeed > 0 && !state.simInterval) {
-            sendPacket('GPS_STARTED', { started: true });
-            if (state.currentStory && !state.currentStory.briefingRead) {
-                state.currentStory.briefingRead = true;
-                speakVoice(state.currentStory.briefing);
-            }
-            startSimulatorWalk();
-        } else if (state.simSpeed === 0) {
-            if (state.simInterval) clearInterval(state.simInterval);
-            state.simInterval = null;
-            state.speed = 0;
             syncAndBroadcastTelemetry();
         }
-    }
 
-    function startSimulatorWalk() {
-        if (state.simInterval) clearInterval(state.simInterval);
+        function onGpsError(err) {
+            console.warn("GPS Warning:", err.message);
+        }
 
-        state.simInterval = setInterval(() => {
-            if (state.simSpeed > 0) {
-                const jitter = (Math.random() - 0.5) * 0.3;
-                state.speed = Math.max(0.5, state.simSpeed + jitter);
+        function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a =
+                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c;
+        }
 
-                const kmPerSec = state.speed / 3600;
-                state.distance += kmPerSec;
+        function setSimSpeed(speedVal) {
+            document.getElementById('simSpeedSlider').value = speedVal;
+            document.getElementById('simSpeedDisplay').innerText = `${speedVal.toFixed(1)} km/t`;
+            state.simSpeed = parseFloat(speedVal);
 
+            if (state.simSpeed > 0 && !state.simInterval) {
+                sendPacket('GPS_STARTED', { started: true });
+                if (state.currentStory && !state.currentStory.briefingRead) {
+                    state.currentStory.briefingRead = true;
+                    speakVoice(state.currentStory.briefing);
+                }
+                startSimulatorWalk();
+            } else if (state.simSpeed === 0) {
+                if (state.simInterval) clearInterval(state.simInterval);
+                state.simInterval = null;
+                state.speed = 0;
                 syncAndBroadcastTelemetry();
             }
-        }, 1000);
-    }
-
-    function syncAndBroadcastTelemetry() {
-        if (state.speed > 0.5) {
-            const totalMinutesPerKm = 60 / state.speed;
-            const minutes = Math.floor(totalMinutesPerKm);
-            const seconds = Math.floor((totalMinutesPerKm - minutes) * 60);
-            state.pace = `${minutes}'${seconds.toString().padStart(2, '0')}"`;
-        } else {
-            state.pace = "0'00\"";
         }
 
-        const mobSpeed = document.getElementById('mobSpeedVal');
-        const mobDist = document.getElementById('mobDistVal');
-        const mobPace = document.getElementById('mobPaceVal');
-        const mobBar = document.getElementById('mobProgressBar');
+        function startSimulatorWalk() {
+            if (state.simInterval) clearInterval(state.simInterval);
 
-        if (mobSpeed) mobSpeed.innerText = state.speed.toFixed(1);
-        if (mobDist) mobDist.innerText = state.distance.toFixed(2);
-        if (mobPace) mobPace.innerText = state.pace;
-        if (mobBar) {
-            const percent = Math.min(100, Math.round((state.distance / state.targetDistance) * 100));
-            mobBar.style.width = `${percent}%`;
+            state.simInterval = setInterval(() => {
+                if (state.simSpeed > 0) {
+                    const jitter = (Math.random() - 0.5) * 0.3;
+                    state.speed = Math.max(0.5, state.simSpeed + jitter);
+
+                    const kmPerSec = state.speed / 3600;
+                    state.distance += kmPerSec;
+
+                    syncAndBroadcastTelemetry();
+                }
+            }, 1000);
         }
 
-        const telemetryPayload = {
-            speed: state.speed,
-            distance: state.distance,
-            pace: state.pace,
-            duration: state.durationSeconds
+        function syncAndBroadcastTelemetry() {
+            if (state.speed > 0.5) {
+                const totalMinutesPerKm = 60 / state.speed;
+                const minutes = Math.floor(totalMinutesPerKm);
+                const seconds = Math.floor((totalMinutesPerKm - minutes) * 60);
+                state.pace = `${minutes}'${seconds.toString().padStart(2, '0')}"`;
+            } else {
+                state.pace = "0'00\"";
+            }
+
+            const mobSpeed = document.getElementById('mobSpeedVal');
+            const mobDist = document.getElementById('mobDistVal');
+            const mobPace = document.getElementById('mobPaceVal');
+            const mobBar = document.getElementById('mobProgressBar');
+
+            if (mobSpeed) mobSpeed.innerText = state.speed.toFixed(1);
+            if (mobDist) mobDist.innerText = state.distance.toFixed(2);
+            if (mobPace) mobPace.innerText = state.pace;
+            if (mobBar) {
+                const percent = Math.min(100, Math.round((state.distance / state.targetDistance) * 100));
+                mobBar.style.width = `${percent}%`;
+            }
+
+            const telemetryPayload = {
+                speed: state.speed,
+                distance: state.distance,
+                pace: state.pace,
+                duration: state.durationSeconds
+            };
+
+            sendPacket('TELEMETRY', telemetryPayload);
+            if (state.role === 'host') {
+                updateHostTelemetry(telemetryPayload);
+                checkStoryMilestones(telemetryPayload);
+                harvestResourcesFromMovement(telemetryPayload.distance, telemetryPayload.speed);
+            }
+        }
+
+        function updateHostTelemetry(payload) {
+            const hSpeed = document.getElementById('hostSpeedVal');
+            const hDist = document.getElementById('hostDistVal');
+            const hPace = document.getElementById('hostPaceVal');
+
+            if (hSpeed) hSpeed.innerText = Number(payload.speed).toFixed(1);
+            if (hDist) hDist.innerText = Number(payload.distance).toFixed(2);
+            if (hPace) hPace.innerText = payload.pace;
+
+            const percent = Math.min(100, Math.round((payload.distance / state.targetDistance) * 100));
+            const progressPercent = document.getElementById('hostProgressPercent');
+            const progressBar = document.getElementById('hostProgressBar');
+
+            if (progressPercent) progressPercent.innerText = `${percent}%`;
+            if (progressBar) progressBar.style.width = `${percent}%`;
+        }
+
+        function speakVoice(text) {
+            if (state.ttsMuted) return;
+            state.lastVoiceMessage = text;
+
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'da-DK';
+                utterance.rate = 1.05;
+                utterance.pitch = 0.95;
+
+                const voices = window.speechSynthesis.getVoices();
+                const dkVoice = voices.find(v => v.lang && (v.lang.includes('da') || v.lang.includes('DK')));
+                if (dkVoice) utterance.voice = dkVoice;
+
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        function toggleMute() {
+            state.ttsMuted = !state.ttsMuted;
+            const muteIcon = document.getElementById('muteIcon');
+            if (state.ttsMuted) {
+                if (muteIcon) muteIcon.className = "fa-solid fa-volume-xmark text-[#ff0055]";
+                window.speechSynthesis.cancel();
+            } else {
+                if (muteIcon) muteIcon.className = "fa-solid fa-volume-high text-[#00f0ff]";
+                speakVoice("Lyd aktiveret.");
+            }
+        }
+
+        function triggerVoiceCue(type) {
+            let message = "";
+            switch (type) {
+                case 'ambush':
+                    message = "Advarsel! Fjendtlige sensorer har spottet dig. Øg hastigheden med det samme for at undslippe!";
+                    logMissionEvent("🚨 HÆNDELSE: Fjendtlig patrulje opdaget. Operative beordret til sprint!");
+                    break;
+                case 'stealth':
+                    message = "Fjendtlig drone overflyvning i din sektor. Sænk farten og hold dig i dækning indtil signalet er klart.";
+                    logMissionEvent("🤫 HÆNDELSE: Drone passerer. Lydsvag fremrykning påkrævet.");
+                    break;
+                case 'loot':
+                    message = "Ressourcecontainer lokaliseret. Materialer til basen overført til dit lager.";
+                    state.resources.titanium += 25;
+                    state.resources.energy += 20;
+                    saveBaseGameData();
+                    renderBaseResources();
+                    logMissionEvent("💎 FORSYNING: +25 Titanium og +20 Energi opsamlet.");
+                    break;
+                case 'status':
+                    message = `Status rapport: Du har tilbagelagt ${state.distance.toFixed(1)} kilometer. Dit tempo er stabilt.`;
+                    logMissionEvent(`📡 TELEMETRI TJEK: Distancelog bekræftet.`);
+                    break;
+                case 'patrol':
+                    message = "Patrulje passerer foran dig. Hold kursen og vær klar.";
+                    logMissionEvent("⚠️ TAKTISK OMLÆGNING: Kurs korrektion sendt.");
+                    break;
+                case 'completed':
+                    message = "Målet er nået! Fremragende indsats, Runner Five. Mission gennemført. Base-belønning udbetalt.";
+                    state.resources.dataCores += 1;
+                    state.resources.energy += 30;
+                    saveBaseGameData();
+                    renderBaseResources();
+                    logMissionEvent("🏆 MISSION SUCCES: Sektor sikret! Bonus: +1 Data Core, +30 Energi.");
+                    break;
+            }
+            dispatchAudioCue(message);
+        }
+
+        function sendCustomTts() {
+            const input = document.getElementById('customTtsInput');
+            const text = input.value.trim();
+            if (!text) return;
+
+            dispatchAudioCue(text);
+            logMissionEvent(`COMMS: "${text}"`);
+            input.value = "";
+        }
+
+        function dispatchAudioCue(text) {
+            sendPacket('VOICE_CUE', { text });
+            if (state.role === 'field') {
+                speakVoice(text);
+                const mobAudioMsg = document.getElementById('mobLastAudioMsg');
+                if (mobAudioMsg) mobAudioMsg.innerText = `"${text}"`;
+            }
+        }
+
+        function checkStoryMilestones(payload) {
+            if (!state.currentStory || state.missionComplete) return;
+
+            const dist = payload.distance;
+            const target = state.targetDistance;
+
+            if (dist >= target * 0.25 && !state.currentStory.triggered25) {
+                state.currentStory.triggered25 = true;
+                dispatchAudioCue(state.currentStory.milestone25);
+                logMissionEvent(`📖 HISTORIE (25%): ${state.currentStory.milestone25}`);
+            }
+
+            if (dist >= target * 0.50 && !state.currentStory.triggered50) {
+                state.currentStory.triggered50 = true;
+                dispatchAudioCue(state.currentStory.milestone50);
+                logMissionEvent(`⚡ HISTORIE HØJDEPUNKT (50%): ${state.currentStory.milestone50}`);
+            }
+
+            if (dist >= target * 0.75 && !state.currentStory.triggered75) {
+                state.currentStory.triggered75 = true;
+                dispatchAudioCue(state.currentStory.milestone75);
+                logMissionEvent(`🚁 HISTORIE (75%): ${state.currentStory.milestone75}`);
+            }
+
+            if (dist >= target && !state.currentStory.triggeredEnd) {
+                state.currentStory.triggeredEnd = true;
+                state.missionComplete = true;
+                dispatchAudioCue(state.currentStory.completed);
+                logMissionEvent(`🏆 MISSION GENNEMFØRT: ${state.currentStory.completed}`);
+                
+                state.resources.dataCores += 2;
+                state.resources.energy += 35;
+                state.resources.titanium += 40;
+                saveBaseGameData();
+                renderBaseResources();
+            }
+        }
+
+        function deployNewMission() {
+            const type = document.getElementById('missionTypeSelect').value;
+            const dist = parseFloat(document.getElementById('distTargetSlider').value);
+
+            state.targetDistance = dist;
+            state.missionType = type;
+            state.distance = 0.0;
+            state.speed = 0.0;
+            state.lastHarvestDistance = 0.0;
+            state.missionComplete = false;
+
+            state.currentStory = generateStoryForMission(type, dist);
+            state.objectiveName = `${state.currentStory.title} (${dist.toFixed(1)} km)`;
+
+            const hostObj = document.getElementById('hostObjectiveText');
+            const hostStory = document.getElementById('hostMissionStoryBrief');
+            if (hostObj) hostObj.innerText = state.objectiveName;
+            if (hostStory) hostStory.innerText = `"${state.currentStory.briefing}"`;
+
+            sendMissionObjectiveToMobile();
+            logMissionEvent(`📖 NY PROCEDUREL MISSION GENERERET: ${state.objectiveName}`);
+        }
+
+        function sendMissionObjectiveToMobile() {
+            sendPacket('OBJECTIVE_SYNC', {
+                target: state.targetDistance,
+                name: state.objectiveName,
+                story: state.currentStory
+            });
+        }
+
+        function startMissionTimer() {
+            if (state.timerInterval) clearInterval(state.timerInterval);
+            state.durationSeconds = 0;
+
+            state.timerInterval = setInterval(() => {
+                state.durationSeconds++;
+                const mins = Math.floor(state.durationSeconds / 60);
+                const secs = state.durationSeconds % 60;
+                const timeString = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+                
+                const hostTime = document.getElementById('hostTimeVal');
+                if (hostTime) hostTime.innerText = timeString;
+            }, 1000);
+        }
+
+        function logMissionEvent(message) {
+            const logBox = document.getElementById('missionLog');
+            if (!logBox) return;
+
+            const now = new Date();
+            const timeCode = now.toTimeString().split(' ')[0];
+            const logEntry = document.createElement('div');
+            logEntry.className = "text-gray-300 border-l border-[#00f0ff] pl-2 py-0.5";
+            logEntry.innerHTML = `<span class="text-gray-500">[${timeCode}]</span> ${message}`;
+
+            logBox.appendChild(logEntry);
+            logBox.scrollTop = logBox.scrollHeight;
+        }
+
+        function updateConnStatus(text, level) {
+            const badge = document.getElementById('connStatusText');
+            if (!badge) return;
+            badge.innerText = text;
+            if (level === 'success') badge.className = "text-[#00ff66] font-bold";
+            else if (level === 'warn') badge.className = "text-[#ffb703] font-bold";
+            else if (level === 'danger') badge.className = "text-[#ff0055] font-bold";
+        }
+
+        function setupUIEventListeners() {
+            document.getElementById('toggleRoleBtn').addEventListener('click', () => {
+                const nextRole = (state.role === 'host') ? 'field' : 'host';
+                setRole(nextRole);
+            });
+
+            const slider = document.getElementById('distTargetSlider');
+            if (slider) {
+                slider.addEventListener('input', (e) => {
+                    document.getElementById('distTargetLabel').innerText = `${parseFloat(e.target.value).toFixed(1)} km`;
+                });
+            }
+
+            const simSlider = document.getElementById('simSpeedSlider');
+            if (simSlider) {
+                simSlider.addEventListener('input', (e) => {
+                    setSimSpeed(parseFloat(e.target.value));
+                });
+            }
+
+            window.addEventListener('keydown', handle3DKeydown);
+            window.addEventListener('keyup', handle3DKeyup);
+            window.addEventListener('resize', onThreeWindowResize);
+        }
+
+        /* ==========================================================================
+           THREE.JS 3D WORLD
+           ========================================================================== */
+        const threeState = {
+            scene: null,
+            camera: null,
+            renderer: null,
+            rover: null,
+            structures: [],
+            buildPads: [],
+            keys: {},
+            roverSpeed: 0,
+            roverHeading: 0,
+            fuel: 100,
+            nearPad: null,
+            initialized: false
         };
 
-        sendPacket('TELEMETRY', telemetryPayload);
-        if (state.role === 'host') {
-            updateHostTelemetry(telemetryPayload);
-            checkStoryMilestones(telemetryPayload);
-            harvestResourcesFromMovement(telemetryPayload.distance, telemetryPayload.speed);
-        }
-    }
+        function init3DWorld() {
+            if (threeState.initialized) return;
+            const container = document.getElementById('threeCanvas');
+            if (!container) return;
 
-    function updateHostTelemetry(payload) {
-        const hSpeed = document.getElementById('hostSpeedVal');
-        const hDist = document.getElementById('hostDistVal');
-        const hPace = document.getElementById('hostPaceVal');
+            threeState.scene = new THREE.Scene();
+            threeState.scene.background = new THREE.Color(0x050811);
+            threeState.scene.fog = new THREE.FogExp2(0x050811, 0.025);
 
-        if (hSpeed) hSpeed.innerText = Number(payload.speed).toFixed(1);
-        if (hDist) hDist.innerText = Number(payload.distance).toFixed(2);
-        if (hPace) hPace.innerText = payload.pace;
+            const width = container.clientWidth || 600;
+            const height = container.clientHeight || 320;
+            threeState.camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
+            threeState.camera.position.set(0, 10, 15);
 
-        const percent = Math.min(100, Math.round((payload.distance / state.targetDistance) * 100));
-        const progressPercent = document.getElementById('hostProgressPercent');
-        const progressBar = document.getElementById('hostProgressBar');
+            threeState.renderer = new THREE.WebGLRenderer({ canvas: container, antialias: true });
+            threeState.renderer.setSize(width, height);
+            threeState.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-        if (progressPercent) progressPercent.innerText = `${percent}%`;
-        if (progressBar) progressBar.style.width = `${percent}%`;
-    }
+            const ambientLight = new THREE.AmbientLight(0x223344, 1.2);
+            threeState.scene.add(ambientLight);
 
-    function speakVoice(text) {
-        if (state.ttsMuted) return;
-        state.lastVoiceMessage = text;
+            const sunLight = new THREE.DirectionalLight(0x00f0ff, 1.5);
+            sunLight.position.set(20, 40, 20);
+            threeState.scene.add(sunLight);
 
-        if ('speechSynthesis' in window) {
-            window.speechSynthesis.cancel();
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = 'da-DK';
-            utterance.rate = 1.05;
-            utterance.pitch = 0.95;
+            const gridHelper = new THREE.GridHelper(80, 40, 0x00f0ff, 0x112233);
+            gridHelper.position.y = -0.01;
+            threeState.scene.add(gridHelper);
 
-            const voices = window.speechSynthesis.getVoices();
-            const dkVoice = voices.find(v => v.lang && (v.lang.includes('da') || v.lang.includes('DK')));
-            if (dkVoice) utterance.voice = dkVoice;
+            const floorGeo = new THREE.PlaneGeometry(100, 100);
+            const floorMat = new THREE.MeshStandardMaterial({ color: 0x070b14, roughness: 0.85, metalness: 0.2 });
+            const floorMesh = new THREE.Mesh(floorGeo, floorMat);
+            floorMesh.rotation.x = -Math.PI / 2;
+            threeState.scene.add(floorMesh);
 
-            window.speechSynthesis.speak(utterance);
-        }
-    }
+            createCentralBaseBuilding();
+            createConstructionPads();
+            createRoverMesh();
 
-    function toggleMute() {
-        state.ttsMuted = !state.ttsMuted;
-        const muteIcon = document.getElementById('muteIcon');
-        if (state.ttsMuted) {
-            if (muteIcon) muteIcon.className = "fa-solid fa-volume-xmark text-[#ff0055]";
-            window.speechSynthesis.cancel();
-        } else {
-            if (muteIcon) muteIcon.className = "fa-solid fa-volume-high text-[#00f0ff]";
-            speakVoice("Lyd aktiveret.");
-        }
-    }
-
-    function triggerVoiceCue(type) {
-        let message = "";
-        switch (type) {
-            case 'ambush':
-                message = "Advarsel! Fjendtlige sensorer har spottet dig. Øg hastigheden med det samme for at undslippe!";
-                logMissionEvent("🚨 HÆNDELSE: Fjendtlig patrulje opdaget. Operative beordret til sprint!");
-                break;
-            case 'stealth':
-                message = "Fjendtlig drone overflyvning i din sektor. Sænk farten og hold dig i dækning indtil signalet er klart.";
-                logMissionEvent("🤫 HÆNDELSE: Drone passerer. Lydsvag fremrykning påkrævet.");
-                break;
-            case 'loot':
-                message = "Ressourcecontainer lokaliseret. Materialer til basen overført til dit lager.";
-                state.resources.titanium += 25;
-                state.resources.energy += 20;
-                saveBaseGameData();
-                renderBaseResources();
-                logMissionEvent("💎 FORSYNING: +25 Titanium og +20 Energi opsamlet.");
-                break;
-            case 'status':
-                message = `Status rapport: Du har tilbagelagt ${state.distance.toFixed(1)} kilometer. Dit tempo er stabilt.`;
-                logMissionEvent(`📡 TELEMETRI TJEK: Distancelog bekræftet.`);
-                break;
-            case 'patrol':
-                message = "Patrulje passerer foran dig. Hold kursen og vær klar.";
-                logMissionEvent("⚠️ TAKTISK OMLÆGNING: Kurs korrektion sendt.");
-                break;
-            case 'completed':
-                message = "Målet er nået! Fremragende indsats, Runner Five. Mission gennemført. Base-belønning udbetalt.";
-                state.resources.dataCores += 1;
-                state.resources.energy += 30;
-                saveBaseGameData();
-                renderBaseResources();
-                logMissionEvent("🏆 MISSION SUCCES: Sektor sikret! Bonus: +1 Data Core, +30 Energi.");
-                break;
-        }
-        dispatchAudioCue(message);
-    }
-
-    function sendCustomTts() {
-        const input = document.getElementById('customTtsInput');
-        const text = input.value.trim();
-        if (!text) return;
-
-        dispatchAudioCue(text);
-        logMissionEvent(`COMMS: "${text}"`);
-        input.value = "";
-    }
-
-    function dispatchAudioCue(text) {
-        sendPacket('VOICE_CUE', { text });
-        if (state.role === 'field') {
-            speakVoice(text);
-            const mobAudioMsg = document.getElementById('mobLastAudioMsg');
-            if (mobAudioMsg) mobAudioMsg.innerText = `"${text}"`;
-        }
-    }
-
-    function checkStoryMilestones(payload) {
-        if (!state.currentStory || state.missionComplete) return;
-
-        const dist = payload.distance;
-        const target = state.targetDistance;
-
-        if (dist >= target * 0.25 && !state.currentStory.triggered25) {
-            state.currentStory.triggered25 = true;
-            dispatchAudioCue(state.currentStory.milestone25);
-            logMissionEvent(`📖 HISTORIE (25%): ${state.currentStory.milestone25}`);
+            threeState.initialized = true;
+            animate3D();
         }
 
-        if (dist >= target * 0.50 && !state.currentStory.triggered50) {
-            state.currentStory.triggered50 = true;
-            dispatchAudioCue(state.currentStory.milestone50);
-            logMissionEvent(`⚡ HISTORIE HØJDEPUNKT (50%): ${state.currentStory.milestone50}`);
-        }
+        function createCentralBaseBuilding() {
+            const baseGroup = new THREE.Group();
 
-        if (dist >= target * 0.75 && !state.currentStory.triggered75) {
-            state.currentStory.triggered75 = true;
-            dispatchAudioCue(state.currentStory.milestone75);
-            logMissionEvent(`🚁 HISTORIE (75%): ${state.currentStory.milestone75}`);
-        }
+            const domeGeo = new THREE.SphereGeometry(3, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2);
+            const domeMat = new THREE.MeshStandardMaterial({ color: 0x0c1e33, roughness: 0.3, metalness: 0.8 });
+            const dome = new THREE.Mesh(domeGeo, domeMat);
+            baseGroup.add(dome);
 
-        if (dist >= target && !state.currentStory.triggeredEnd) {
-            state.currentStory.triggeredEnd = true;
-            state.missionComplete = true;
-            dispatchAudioCue(state.currentStory.completed);
-            logMissionEvent(`🏆 MISSION GENNEMFØRT: ${state.currentStory.completed}`);
-            
-            state.resources.dataCores += 2;
-            state.resources.energy += 35;
-            state.resources.titanium += 40;
-            saveBaseGameData();
-            renderBaseResources();
-        }
-    }
-
-    function deployNewMission() {
-        const type = document.getElementById('missionTypeSelect').value;
-        const dist = parseFloat(document.getElementById('distTargetSlider').value);
-
-        state.targetDistance = dist;
-        state.missionType = type;
-        state.distance = 0.0;
-        state.speed = 0.0;
-        state.lastHarvestDistance = 0.0;
-        state.missionComplete = false;
-
-        state.currentStory = generateStoryForMission(type, dist);
-        state.objectiveName = `${state.currentStory.title} (${dist.toFixed(1)} km)`;
-
-        const hostObj = document.getElementById('hostObjectiveText');
-        const hostStory = document.getElementById('hostMissionStoryBrief');
-        if (hostObj) hostObj.innerText = state.objectiveName;
-        if (hostStory) hostStory.innerText = `"${state.currentStory.briefing}"`;
-
-        sendMissionObjectiveToMobile();
-        logMissionEvent(`📖 NY PROCEDUREL MISSION GENERERET: ${state.objectiveName}`);
-    }
-
-    function sendMissionObjectiveToMobile() {
-        sendPacket('OBJECTIVE_SYNC', {
-            target: state.targetDistance,
-            name: state.objectiveName,
-            story: state.currentStory
-        });
-    }
-
-    function startMissionTimer() {
-        if (state.timerInterval) clearInterval(state.timerInterval);
-        state.durationSeconds = 0;
-
-        state.timerInterval = setInterval(() => {
-            state.durationSeconds++;
-            const mins = Math.floor(state.durationSeconds / 60);
-            const secs = state.durationSeconds % 60;
-            const timeString = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-            
-            const hostTime = document.getElementById('hostTimeVal');
-            if (hostTime) hostTime.innerText = timeString;
-        }, 1000);
-    }
-
-    function logMissionEvent(message) {
-        const logBox = document.getElementById('missionLog');
-        if (!logBox) return;
-
-        const now = new Date();
-        const timeCode = now.toTimeString().split(' ')[0];
-        const logEntry = document.createElement('div');
-        logEntry.className = "text-gray-300 border-l border-[#00f0ff] pl-2 py-0.5";
-        logEntry.innerHTML = `<span class="text-gray-500">[${timeCode}]</span> ${message}`;
-
-        logBox.appendChild(logEntry);
-        logBox.scrollTop = logBox.scrollHeight;
-    }
-
-    function updateConnStatus(text, level) {
-        const badge = document.getElementById('connStatusText');
-        if (!badge) return;
-        badge.innerText = text;
-        if (level === 'success') badge.className = "text-[#00ff66] font-bold";
-        else if (level === 'warn') badge.className = "text-[#ffb703] font-bold";
-        else if (level === 'danger') badge.className = "text-[#ff0055] font-bold";
-    }
-
-    function setupUIEventListeners() {
-        document.getElementById('toggleRoleBtn').addEventListener('click', () => {
-            const nextRole = (state.role === 'host') ? 'field' : 'host';
-            setRole(nextRole);
-        });
-
-        const slider = document.getElementById('distTargetSlider');
-        if (slider) {
-            slider.addEventListener('input', (e) => {
-                document.getElementById('distTargetLabel').innerText = `${parseFloat(e.target.value).toFixed(1)} km`;
-            });
-        }
-
-        const simSlider = document.getElementById('simSpeedSlider');
-        if (simSlider) {
-            simSlider.addEventListener('input', (e) => {
-                setSimSpeed(parseFloat(e.target.value));
-            });
-        }
-
-        window.addEventListener('keydown', handle3DKeydown);
-        window.addEventListener('keyup', handle3DKeyup);
-        window.addEventListener('resize', onThreeWindowResize);
-    }
-
-    /* ==========================================================================
-       THREE.JS 3D WORLD
-       ========================================================================== */
-    const threeState = {
-        scene: null,
-        camera: null,
-        renderer: null,
-        rover: null,
-        structures: [],
-        buildPads: [],
-        keys: {},
-        roverSpeed: 0,
-        roverHeading: 0,
-        fuel: 100,
-        nearPad: null,
-        initialized: false
-    };
-
-    function init3DWorld() {
-        if (threeState.initialized) return;
-        const container = document.getElementById('threeCanvas');
-        if (!container) return;
-
-        threeState.scene = new THREE.Scene();
-        threeState.scene.background = new THREE.Color(0x050811);
-        threeState.scene.fog = new THREE.FogExp2(0x050811, 0.025);
-
-        const width = container.clientWidth || 600;
-        const height = container.clientHeight || 320;
-        threeState.camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
-        threeState.camera.position.set(0, 10, 15);
-
-        threeState.renderer = new THREE.WebGLRenderer({ canvas: container, antialias: true });
-        threeState.renderer.setSize(width, height);
-        threeState.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
-        const ambientLight = new THREE.AmbientLight(0x223344, 1.2);
-        threeState.scene.add(ambientLight);
-
-        const sunLight = new THREE.DirectionalLight(0x00f0ff, 1.5);
-        sunLight.position.set(20, 40, 20);
-        threeState.scene.add(sunLight);
-
-        const gridHelper = new THREE.GridHelper(80, 40, 0x00f0ff, 0x112233);
-        gridHelper.position.y = -0.01;
-        threeState.scene.add(gridHelper);
-
-        const floorGeo = new THREE.PlaneGeometry(100, 100);
-        const floorMat = new THREE.MeshStandardMaterial({ color: 0x070b14, roughness: 0.85, metalness: 0.2 });
-        const floorMesh = new THREE.Mesh(floorGeo, floorMat);
-        floorMesh.rotation.x = -Math.PI / 2;
-        threeState.scene.add(floorMesh);
-
-        createCentralBaseBuilding();
-        createConstructionPads();
-        createRoverMesh();
-
-        threeState.initialized = true;
-        animate3D();
-    }
-
-    function createCentralBaseBuilding() {
-        const baseGroup = new THREE.Group();
-
-        const domeGeo = new THREE.SphereGeometry(3, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2);
-        const domeMat = new THREE.MeshStandardMaterial({ color: 0x0c1e33, roughness: 0.3, metalness: 0.8 });
-        const dome = new THREE.Mesh(domeGeo, domeMat);
-        baseGroup.add(dome);
-
-        const ringGeo = new THREE.TorusGeometry(3.1, 0.08, 8, 24);
-        const ringMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
-        const ring = new THREE.Mesh(ringGeo, ringMat);
-        ring.rotation.x = Math.PI / 2;
-        baseGroup.add(ring);
-
-        const mastGeo = new THREE.CylinderGeometry(0.1, 0.2, 4);
-        const mastMat = new THREE.MeshStandardMaterial({ color: 0x8899aa });
-        const mast = new THREE.Mesh(mastGeo, mastMat);
-        mast.position.y = 3.5;
-        baseGroup.add(mast);
-
-        const dishGeo = new THREE.ConeGeometry(0.8, 0.4, 12, 1, true);
-        const dishMat = new THREE.MeshBasicMaterial({ color: 0xffb703, wireframe: true });
-        const dish = new THREE.Mesh(dishGeo, dishMat);
-        dish.position.y = 5.2;
-        dish.rotation.x = Math.PI / 3;
-        baseGroup.add(dish);
-        baseGroup.userData.dish = dish;
-
-        threeState.scene.add(baseGroup);
-        threeState.structures.push(baseGroup);
-    }
-
-    function createConstructionPads() {
-        const padLocations = [
-            { x: -12, z: -10, name: "Solcellekuppel", type: "solar", costTit: 20, costEle: 15, built: false },
-            { x: 12, z: -10, name: "Forskningslaboratorium", type: "lab", costTit: 30, costEle: 25, built: false },
-            { x: 0, z: 14, name: "Forsvarstårn & Silo", type: "turret", costTit: 25, costNrg: 30, built: false }
-        ];
-
-        padLocations.forEach((padData) => {
-            const padGroup = new THREE.Group();
-            padGroup.position.set(padData.x, 0.05, padData.z);
-
-            const ringGeo = new THREE.RingGeometry(1.8, 2.2, 24);
-            const ringMat = new THREE.MeshBasicMaterial({ color: 0xffb703, side: THREE.DoubleSide });
+            const ringGeo = new THREE.TorusGeometry(3.1, 0.08, 8, 24);
+            const ringMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
             const ring = new THREE.Mesh(ringGeo, ringMat);
             ring.rotation.x = Math.PI / 2;
-            padGroup.add(ring);
+            baseGroup.add(ring);
 
-            padGroup.userData = padData;
-            threeState.scene.add(padGroup);
-            threeState.buildPads.push(padGroup);
-        });
-    }
+            const mastGeo = new THREE.CylinderGeometry(0.1, 0.2, 4);
+            const mastMat = new THREE.MeshStandardMaterial({ color: 0x8899aa });
+            const mast = new THREE.Mesh(mastGeo, mastMat);
+            mast.position.y = 3.5;
+            baseGroup.add(mast);
 
-    function createRoverMesh() {
-        const roverGroup = new THREE.Group();
+            const dishGeo = new THREE.ConeGeometry(0.8, 0.4, 12, 1, true);
+            const dishMat = new THREE.MeshBasicMaterial({ color: 0xffb703, wireframe: true });
+            const dish = new THREE.Mesh(dishGeo, dishMat);
+            dish.position.y = 5.2;
+            dish.rotation.x = Math.PI / 3;
+            baseGroup.add(dish);
+            baseGroup.userData.dish = dish;
 
-        const bodyGeo = new THREE.BoxGeometry(1.4, 0.6, 2.2);
-        const bodyMat = new THREE.MeshStandardMaterial({ color: 0x00f0ff, roughness: 0.4, metalness: 0.7 });
-        const body = new THREE.Mesh(bodyGeo, bodyMat);
-        body.position.y = 0.6;
-        roverGroup.add(body);
-
-        const glassGeo = new THREE.BoxGeometry(1.1, 0.4, 0.9);
-        const glassMat = new THREE.MeshBasicMaterial({ color: 0x05070a });
-        const glass = new THREE.Mesh(glassGeo, glassMat);
-        glass.position.set(0, 0.85, 0.2);
-        roverGroup.add(glass);
-
-        const wheelGeo = new THREE.CylinderGeometry(0.35, 0.35, 0.3, 12);
-        const wheelMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9 });
-        const wheelOffsets = [
-            [-0.85, 0.35, -0.7],
-            [0.85, 0.35, -0.7],
-            [-0.85, 0.35, 0.7],
-            [0.85, 0.35, 0.7]
-        ];
-
-        wheelOffsets.forEach(([wx, wy, wz]) => {
-            const wheel = new THREE.Mesh(wheelGeo, wheelMat);
-            wheel.rotation.z = Math.PI / 2;
-            wheel.position.set(wx, wy, wz);
-            roverGroup.add(wheel);
-        });
-
-        roverGroup.position.set(0, 0, 7);
-        threeState.scene.add(roverGroup);
-        threeState.rover = roverGroup;
-    }
-
-    function handle3DKeydown(e) {
-        threeState.keys[e.key.toLowerCase()] = true;
-        if (e.key.toLowerCase() === 'e' && threeState.nearPad) {
-            buildOnPad(threeState.nearPad);
+            threeState.scene.add(baseGroup);
+            threeState.structures.push(baseGroup);
         }
-    }
 
-    function handle3DKeyup(e) {
-        threeState.keys[e.key.toLowerCase()] = false;
-    }
+        function createConstructionPads() {
+            const padLocations = [
+                { x: -12, z: -10, name: "Solcellekuppel", type: "solar", costTit: 20, costEle: 15, built: false },
+                { x: 12, z: -10, name: "Forskningslaboratorium", type: "lab", costTit: 30, costEle: 25, built: false },
+                { x: 0, z: 14, name: "Forsvarstårn & Silo", type: "turret", costTit: 25, costNrg: 30, built: false }
+            ];
 
-    function driveRoverForward() {
-        if (threeState.fuel > 0) {
-            threeState.roverSpeed = Math.min(threeState.roverSpeed + 0.15, 0.4);
-            consumeFuel(0.4);
+            padLocations.forEach((padData) => {
+                const padGroup = new THREE.Group();
+                padGroup.position.set(padData.x, 0.05, padData.z);
+
+                const ringGeo = new THREE.RingGeometry(1.8, 2.2, 24);
+                const ringMat = new THREE.MeshBasicMaterial({ color: 0xffb703, side: THREE.DoubleSide });
+                const ring = new THREE.Mesh(ringGeo, ringMat);
+                ring.rotation.x = Math.PI / 2;
+                padGroup.add(ring);
+
+                padGroup.userData = padData;
+                threeState.scene.add(padGroup);
+                threeState.buildPads.push(padGroup);
+            });
         }
-    }
 
-    function turnRover(dir) {
-        threeState.roverHeading += dir * 0.1;
-    }
+        function createRoverMesh() {
+            const roverGroup = new THREE.Group();
 
-    function consumeFuel(amount) {
-        threeState.fuel = Math.max(0, threeState.fuel - amount);
-        const fuelBadge = document.getElementById('roverFuelBadge');
-        if (fuelBadge) {
-            fuelBadge.innerText = `${Math.round(threeState.fuel)}%`;
-            if (threeState.fuel < 20) fuelBadge.className = "text-[#ff0055] font-bold";
-            else fuelBadge.className = "text-[#ffb703] font-bold";
+            const bodyGeo = new THREE.BoxGeometry(1.4, 0.6, 2.2);
+            const bodyMat = new THREE.MeshStandardMaterial({ color: 0x00f0ff, roughness: 0.4, metalness: 0.7 });
+            const body = new THREE.Mesh(bodyGeo, bodyMat);
+            body.position.y = 0.6;
+            roverGroup.add(body);
+
+            const glassGeo = new THREE.BoxGeometry(1.1, 0.4, 0.9);
+            const glassMat = new THREE.MeshBasicMaterial({ color: 0x05070a });
+            const glass = new THREE.Mesh(glassGeo, glassMat);
+            glass.position.set(0, 0.85, 0.2);
+            roverGroup.add(glass);
+
+            const wheelGeo = new THREE.CylinderGeometry(0.35, 0.35, 0.3, 12);
+            const wheelMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9 });
+            const wheelOffsets = [
+                [-0.85, 0.35, -0.7],
+                [0.85, 0.35, -0.7],
+                [-0.85, 0.35, 0.7],
+                [0.85, 0.35, 0.7]
+            ];
+
+            wheelOffsets.forEach(([wx, wy, wz]) => {
+                const wheel = new THREE.Mesh(wheelGeo, wheelMat);
+                wheel.rotation.z = Math.PI / 2;
+                wheel.position.set(wx, wy, wz);
+                roverGroup.add(wheel);
+            });
+
+            roverGroup.position.set(0, 0, 7);
+            threeState.scene.add(roverGroup);
+            threeState.rover = roverGroup;
         }
-    }
 
-    function refuelRover() {
-        if (state.resources.energy >= 5) {
-            state.resources.energy -= 5;
-            threeState.fuel = 100;
-            saveBaseGameData();
-            renderBaseResources();
-            consumeFuel(0);
-            logMissionEvent("🔋 ROVER GENOPLADET: 100% batteri gendannet via 5 Energi.");
-            dispatchAudioCue("Køretøj fuldt opladet.");
-        } else {
-            alert("Ikke nok energi! Gå eller løb for at skaffe energi.");
+        function handle3DKeydown(e) {
+            threeState.keys[e.key.toLowerCase()] = true;
+            if (e.key.toLowerCase() === 'e' && threeState.nearPad) {
+                buildOnPad(threeState.nearPad);
+            }
         }
-    }
 
-    function buildOnPad(padGroup) {
-        const data = padGroup.userData;
-        if (data.built) return;
+        function handle3DKeyup(e) {
+            threeState.keys[e.key.toLowerCase()] = false;
+        }
 
-        const titCost = data.costTit || 0;
-        const eleCost = data.costEle || 0;
-        const nrgCost = data.costNrg || 0;
+        function driveRoverForward() {
+            if (threeState.fuel > 0) {
+                threeState.roverSpeed = Math.min(threeState.roverSpeed + 0.15, 0.4);
+                consumeFuel(0.4);
+            }
+        }
 
-        if (state.resources.titanium >= titCost && state.resources.electronics >= eleCost && state.resources.energy >= nrgCost) {
-            state.resources.titanium -= titCost;
-            state.resources.electronics -= eleCost;
-            state.resources.energy -= nrgCost;
-            data.built = true;
+        function turnRover(dir) {
+            threeState.roverHeading += dir * 0.1;
+        }
 
-            let newMesh;
-            if (data.type === 'solar') {
-                const domeGeo = new THREE.SphereGeometry(1.4, 12, 12, 0, Math.PI * 2, 0, Math.PI / 2);
-                const domeMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff, wireframe: true });
-                newMesh = new THREE.Mesh(domeGeo, domeMat);
-            } else if (data.type === 'lab') {
-                const boxGeo = new THREE.BoxGeometry(2, 2, 2);
-                const boxMat = new THREE.MeshStandardMaterial({ color: 0xb5179e, roughness: 0.3 });
-                newMesh = new THREE.Mesh(boxGeo, boxMat);
-                newMesh.position.y = 1;
+        function consumeFuel(amount) {
+            threeState.fuel = Math.max(0, threeState.fuel - amount);
+            const fuelBadge = document.getElementById('roverFuelBadge');
+            if (fuelBadge) {
+                fuelBadge.innerText = `${Math.round(threeState.fuel)}%`;
+                if (threeState.fuel < 20) fuelBadge.className = "text-[#ff0055] font-bold";
+                else fuelBadge.className = "text-[#ffb703] font-bold";
+            }
+        }
+
+        function refuelRover() {
+            if (state.resources.energy >= 5) {
+                state.resources.energy -= 5;
+                threeState.fuel = 100;
+                saveBaseGameData();
+                renderBaseResources();
+                consumeFuel(0);
+                logMissionEvent("🔋 ROVER GENOPLADET: 100% batteri gendannet via 5 Energi.");
+                dispatchAudioCue("Køretøj fuldt opladet.");
             } else {
-                const cylGeo = new THREE.CylinderGeometry(0.8, 1, 3, 8);
-                const cylMat = new THREE.MeshStandardMaterial({ color: 0xff0055, roughness: 0.5 });
-                newMesh = new THREE.Mesh(cylGeo, cylMat);
-                newMesh.position.y = 1.5;
-            }
-
-            padGroup.add(newMesh);
-            saveBaseGameData();
-            renderBaseResources();
-            logMissionEvent(`🏗️ 3D BASE BYGNING: ${data.name} opført!`);
-            dispatchAudioCue(`Ny facilitet opført: ${data.name}.`);
-            document.getElementById('zoneActionPrompt').classList.add('hidden');
-        } else {
-            alert(`Mangler ressourcer til ${data.name}!`);
-        }
-    }
-
-    function update3DPhysics() {
-        if (!threeState.rover) return;
-
-        const k = threeState.keys;
-        const isAccelerating = (k['w'] || k['arrowup']) && threeState.fuel > 0;
-        const isReversing = (k['s'] || k['arrowdown']) && threeState.fuel > 0;
-
-        if (isAccelerating) {
-            threeState.roverSpeed = Math.min(threeState.roverSpeed + 0.015, 0.3);
-            consumeFuel(0.08);
-        } else if (isReversing) {
-            threeState.roverSpeed = Math.max(threeState.roverSpeed - 0.015, -0.15);
-            consumeFuel(0.08);
-        } else {
-            threeState.roverSpeed *= 0.92;
-        }
-
-        if (k['a'] || k['arrowleft']) {
-            threeState.roverHeading += 0.045 * (threeState.roverSpeed >= 0 ? 1 : -1);
-        }
-        if (k['d'] || k['arrowright']) {
-            threeState.roverHeading -= 0.045 * (threeState.roverSpeed >= 0 ? 1 : -1);
-        }
-
-        threeState.rover.rotation.y = threeState.roverHeading;
-        threeState.rover.position.x += Math.sin(threeState.roverHeading) * threeState.roverSpeed;
-        threeState.rover.position.z += Math.cos(threeState.roverHeading) * threeState.roverSpeed;
-
-        threeState.rover.position.x = Math.max(-35, Math.min(35, threeState.rover.position.x));
-        threeState.rover.position.z = Math.max(-35, Math.min(35, threeState.rover.position.z));
-
-        const targetCamX = threeState.rover.position.x - Math.sin(threeState.roverHeading) * 8;
-        const targetCamZ = threeState.rover.position.z - Math.cos(threeState.roverHeading) * 8;
-        threeState.camera.position.x += (targetCamX - threeState.camera.position.x) * 0.1;
-        threeState.camera.position.z += (targetCamZ - threeState.camera.position.z) * 0.1;
-        threeState.camera.position.y = 5.5;
-        threeState.camera.lookAt(threeState.rover.position.x, 1.2, threeState.rover.position.z);
-
-        const coordEl = document.getElementById('roverCoordinates');
-        if (coordEl) {
-            coordEl.innerText = `POS: X:${Math.round(threeState.rover.position.x)} Z:${Math.round(threeState.rover.position.z)}`;
-        }
-
-        if (threeState.structures[0] && threeState.structures[0].userData.dish) {
-            threeState.structures[0].userData.dish.rotation.z += 0.015;
-        }
-
-        checkProximityToPads();
-    }
-
-    function checkProximityToPads() {
-        let foundPad = null;
-        const promptBox = document.getElementById('zoneActionPrompt');
-        const promptText = document.getElementById('zonePromptText');
-
-        threeState.buildPads.forEach((pad) => {
-            const dist = threeState.rover.position.distanceTo(pad.position);
-            if (dist < 3.2 && !pad.userData.built) {
-                foundPad = pad;
-            }
-        });
-
-        threeState.nearPad = foundPad;
-        if (foundPad) {
-            promptBox.classList.remove('hidden');
-            promptText.innerText = `Byg ${foundPad.userData.name} [Tryk E på tastatur]`;
-        } else {
-            promptBox.classList.add('hidden');
-        }
-    }
-
-    function animate3D() {
-        requestAnimationFrame(animate3D);
-        if (state.role === 'host') {
-            update3DPhysics();
-            if (threeState.renderer && threeState.scene && threeState.camera) {
-                threeState.renderer.render(threeState.scene, threeState.camera);
+                alert("Ikke nok energi! Gå eller løb for at skaffe energi.");
             }
         }
-    }
 
-    function onThreeWindowResize() {
-        const container = document.getElementById('threeCanvas');
-        if (!container || !threeState.renderer || !threeState.camera) return;
-        const width = container.clientWidth;
-        const height = container.clientHeight;
-        threeState.camera.aspect = width / height;
-        threeState.camera.updateProjectionMatrix();
-        threeState.renderer.setSize(width, height);
-    }
+        function buildOnPad(padGroup) {
+            const data = padGroup.userData;
+            if (data.built) return;
 
-    const origInitHostPeer = initHostPeer;
-    initHostPeer = function() {
-        origInitHostPeer();
-        setTimeout(init3DWorld, 250);
-    };
-</script>
+            const titCost = data.costTit || 0;
+            const eleCost = data.costEle || 0;
+            const nrgCost = data.costNrg || 0;
+
+            if (state.resources.titanium >= titCost && state.resources.electronics >= eleCost && state.resources.energy >= nrgCost) {
+                state.resources.titanium -= titCost;
+                state.resources.electronics -= eleCost;
+                state.resources.energy -= nrgCost;
+                data.built = true;
+
+                let newMesh;
+                if (data.type === 'solar') {
+                    const domeGeo = new THREE.SphereGeometry(1.4, 12, 12, 0, Math.PI * 2, 0, Math.PI / 2);
+                    const domeMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff, wireframe: true });
+                    newMesh = new THREE.Mesh(domeGeo, domeMat);
+                } else if (data.type === 'lab') {
+                    const boxGeo = new THREE.BoxGeometry(2, 2, 2);
+                    const boxMat = new THREE.MeshStandardMaterial({ color: 0xb5179e, roughness: 0.3 });
+                    newMesh = new THREE.Mesh(boxGeo, boxMat);
+                    newMesh.position.y = 1;
+                } else {
+                    const cylGeo = new THREE.CylinderGeometry(0.8, 1, 3, 8);
+                    const cylMat = new THREE.MeshStandardMaterial({ color: 0xff0055, roughness: 0.5 });
+                    newMesh = new THREE.Mesh(cylGeo, cylMat);
+                    newMesh.position.y = 1.5;
+                }
+
+                padGroup.add(newMesh);
+                saveBaseGameData();
+                renderBaseResources();
+                logMissionEvent(`🏗️ 3D BASE BYGNING: ${data.name} opført!`);
+                dispatchAudioCue(`Ny facilitet opført: ${data.name}.`);
+                document.getElementById('zoneActionPrompt').classList.add('hidden');
+            } else {
+                alert(`Mangler ressourcer til ${data.name}!`);
+            }
+        }
+
+        function update3DPhysics() {
+            if (!threeState.rover) return;
+
+            const k = threeState.keys;
+            const isAccelerating = (k['w'] || k['arrowup']) && threeState.fuel > 0;
+            const isReversing = (k['s'] || k['arrowdown']) && threeState.fuel > 0;
+
+            if (isAccelerating) {
+                threeState.roverSpeed = Math.min(threeState.roverSpeed + 0.015, 0.3);
+                consumeFuel(0.08);
+            } else if (isReversing) {
+                threeState.roverSpeed = Math.max(threeState.roverSpeed - 0.015, -0.15);
+                consumeFuel(0.08);
+            } else {
+                threeState.roverSpeed *= 0.92;
+            }
+
+            if (k['a'] || k['arrowleft']) {
+                threeState.roverHeading += 0.045 * (threeState.roverSpeed >= 0 ? 1 : -1);
+            }
+            if (k['d'] || k['arrowright']) {
+                threeState.roverHeading -= 0.045 * (threeState.roverSpeed >= 0 ? 1 : -1);
+            }
+
+            threeState.rover.rotation.y = threeState.roverHeading;
+            threeState.rover.position.x += Math.sin(threeState.roverHeading) * threeState.roverSpeed;
+            threeState.rover.position.z += Math.cos(threeState.roverHeading) * threeState.roverSpeed;
+
+            threeState.rover.position.x = Math.max(-35, Math.min(35, threeState.rover.position.x));
+            threeState.rover.position.z = Math.max(-35, Math.min(35, threeState.rover.position.z));
+
+            const targetCamX = threeState.rover.position.x - Math.sin(threeState.roverHeading) * 8;
+            const targetCamZ = threeState.rover.position.z - Math.cos(threeState.roverHeading) * 8;
+            threeState.camera.position.x += (targetCamX - threeState.camera.position.x) * 0.1;
+            threeState.camera.position.z += (targetCamZ - threeState.camera.position.z) * 0.1;
+            threeState.camera.position.y = 5.5;
+            threeState.camera.lookAt(threeState.rover.position.x, 1.2, threeState.rover.position.z);
+
+            const coordEl = document.getElementById('roverCoordinates');
+            if (coordEl) {
+                coordEl.innerText = `POS: X:${Math.round(threeState.rover.position.x)} Z:${Math.round(threeState.rover.position.z)}`;
+            }
+
+            if (threeState.structures[0] && threeState.structures[0].userData.dish) {
+                threeState.structures[0].userData.dish.rotation.z += 0.015;
+            }
+
+            checkProximityToPads();
+        }
+
+        function checkProximityToPads() {
+            let foundPad = null;
+            const promptBox = document.getElementById('zoneActionPrompt');
+            const promptText = document.getElementById('zonePromptText');
+
+            threeState.buildPads.forEach((pad) => {
+                const dist = threeState.rover.position.distanceTo(pad.position);
+                if (dist < 3.2 && !pad.userData.built) {
+                    foundPad = pad;
+                }
+            });
+
+            threeState.nearPad = foundPad;
+            if (foundPad) {
+                promptBox.classList.remove('hidden');
+                promptText.innerText = `Byg ${foundPad.userData.name} [Tryk E på tastatur]`;
+            } else {
+                promptBox.classList.add('hidden');
+            }
+        }
+
+        function animate3D() {
+            requestAnimationFrame(animate3D);
+            if (state.role === 'host') {
+                update3DPhysics();
+                if (threeState.renderer && threeState.scene && threeState.camera) {
+                    threeState.renderer.render(threeState.scene, threeState.camera);
+                }
+            }
+        }
+
+        function onThreeWindowResize() {
+            const container = document.getElementById('threeCanvas');
+            if (!container || !threeState.renderer || !threeState.camera) return;
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            threeState.camera.aspect = width / height;
+            threeState.camera.updateProjectionMatrix();
+            threeState.renderer.setSize(width, height);
+        }
+
+        const origInitHostPeer = initHostPeer;
+        initHostPeer = function() {
+            origInitHostPeer();
+            setTimeout(init3DWorld, 250);
+        };
+    </script>
+</body>
+</html>
