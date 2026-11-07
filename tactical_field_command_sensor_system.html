@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="da" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AEGIS OPERATIVE // Tactical Mission Runner</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- QRCode.js CDN for pairing link generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- FontAwesome for tactical icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Font: Rajdhani & Share Tech Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        tactical: {
+                            bg: '#05070a',
+                            panel: '#0c1017',
+                            border: '#1a2333',
+                            accent: '#00f0ff',
+                            warn: '#ffb703',
+                            danger: '#ff0055',
+                            success: '#00ff66'
+                        }
+                    },
+                    fontFamily: {
+                        tactical: ['Rajdhani', 'sans-serif'],
+                        mono: ['Share Tech Mono', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #05070a;
+            color: #d1d5db;
+            font-family: 'Rajdhani', sans-serif;
+            overflow-x: hidden;
+            touch-action: manipulation;
+        }
+        .scanline {
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            background-size: 100% 3px, 6px 100%;
+            pointer-events: none;
+        }
+        .glow-accent { text-shadow: 0 0 10px rgba(0, 240, 255, 0.65); }
+        .glow-danger { text-shadow: 0 0 10px rgba(255, 0, 85, 0.65); }
+        .glow-success { text-shadow: 0 0 10px rgba(0, 255, 102, 0.65); }
+    </style>
+</head>
+<body class="min-h-screen bg-tactical-bg text-gray-200 select-none">
+    <div class="fixed inset-0 scanline z-50 pointer-events-none opacity-40"></div>
+
+    <!-- MAIN APP WRAPPER -->
+    <div id="app" class="relative z-10 w-full min-h-screen flex flex-col">
+        
+        <!-- TOP STATUS HEADER -->
+        <header class="w-full bg-tactical-panel border-b border-tactical-border px-4 py-2 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <i class="fa-solid fa-satellite-dish text-tactical-accent animate-pulse text-xl"></i>
+                <div>
+                    <h1 class="text-lg font-bold tracking-widest text-white uppercase font-tactical">AEGIS // OPERATIVE COMMS</h1>
+                    <div class="text-xs font-mono text-gray-400 flex items-center gap-2">
+                        <span>SYS: <span id="systemModeBadge" class="text-tactical-accent">STANDBY</span></span>
+                        <span>•</span>
+                        <span>LINK: <span id="connStatusText" class="text-tactical-success">LOKAL BUS AKTIV</span></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Mode Switcher -->
+            <div class="flex items-center space-x-2">
+                <button id="toggleRoleBtn" class="px-3 py-1 text-xs font-mono border border-tactical-accent text-tactical-accent hover:bg-tactical-accent hover:text-black rounded transition uppercase">
+                    Skift Til Mobil Visning
+                </button>
+            </div>
+        </header>
+
+        <!-- ========================================== -->
+        <!-- VIEW 1: HOST COMMAND (PC VIEW)             -->
+        <!-- ========================================== -->
+        <main id="hostView" class="flex-1 p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 max-w-7xl mx-auto w-full">
+            
+            <!-- LEFT COLUMN: OPERATIVE TELEMETRY (7 Cols) -->
+            <div class="lg:col-span-7 flex flex-col space-y-6">
+                
+                <!-- Telemetry Cards -->
+                <div class="bg-tactical-panel border border-tactical-border rounded-lg p-5 shadow-2xl relative overflow-hidden">
+                    <div class="flex justify-between items-center border-b border-tactical-border pb-3 mb-4">
+                        <div class="flex items-center space-x-2">
+                            <span id="hostPulseDot" class="w-2.5 h-2.5 rounded-full bg-tactical-warn animate-ping"></span>
+                            <h2 class="text-xl font-bold uppercase tracking-wider text-tactical-accent font-tactical">Felt-Enhed Telemetri</h2>
+                        </div>
+                        <span class="text-xs font-mono px-2 py-0.5 rounded bg-gray-900 border border-gray-700 text-gray-300">
+                            OPERATIVE: #RUNNER-5
+                        </span>
+                    </div>
+
+                    <!-- Live KPI Grid -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+                        <div class="bg-tactical-bg border border-tactical-border p-3 rounded">
+                            <div class="text-xs font-mono text-gray-400 uppercase">Hastighed</div>
+                            <div id="hostSpeedVal" class="text-3xl sm:text-4xl font-bold text-tactical-accent font-mono glow-accent">0.0</div>
+                            <div class="text-xs font-mono text-gray-500">KM/T</div>
+                        </div>
+
+                        <div class="bg-tactical-bg border border-tactical-border p-3 rounded">
+                            <div class="text-xs font-mono text-gray-400 uppercase">Distance</div>
+                            <div id="hostDistVal" class="text-3xl sm:text-4xl font-bold text-white font-mono">0.00</div>
+                            <div class="text-xs font-mono text-gray-500">KILOMETER</div>
+                        </div>
+
+                        <div class="bg-tactical-bg border border-tactical-border p-3 rounded">
+                            <div class="text-xs font-mono text-gray-400 uppercase">Pace</div>
+                            <div id="hostPaceVal" class="text-3xl sm:text-4xl font-bold text-gray-300 font-mono">0'00"</div>
+                            <div class="text-xs font-mono text-gray-500">MIN/KM</div>
+                        </div>
+
+                        <div class="bg-tactical-bg border border-tactical-border p-3 rounded">
+                            <div class="text-xs font-mono text-gray-400 uppercase">Missionstid</div>
+                            <div id="hostTimeVal" class="text-3xl sm:text-4xl font-bold text-tactical-warn font-mono">00:00</div>
+                            <div class="text-xs font-mono text-gray-500">MM:SS</div>
+                        </div>
+                    </div>
+
+                    <!-- Mission Goal Progress -->
+                    <div class="mt-6">
+                        <div class="flex justify-between items-center text-xs font-mono mb-1">
+                            <span class="text-gray-300 uppercase">Mission Mål: <span id="hostObjectiveText">Infiltrer Sektor 7 (3.0 km)</span></span>
+                            <span id="hostProgressPercent" class="text-tactical-accent font-bold">0%</span>
+                        </div>
+                        <div class="w-full bg-tactical-bg border border-tactical-border h-3 rounded-full overflow-hidden p-0.5">
+                            <div id="hostProgressBar" class="h-full bg-gradient-to-r from-tactical-accent to-tactical-success w-0 rounded-full transition-all duration-300 shadow-lg"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mission Tactical Cue Controls (Sound Injection) -->
+                <div class="bg-tactical-panel border border-tactical-border rounded-lg p-5">
+                    <h3 class="text-md font-bold uppercase tracking-wider text-gray-300 mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-bullhorn text-tactical-accent"></i>
+                        Send Taktisk TTS Lydordre til Høretelefoner
+                    </h3>
+                    
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-4">
+                        <button onclick="triggerVoiceCue('ambush')" class="px-3 py-2 bg-tactical-bg border border-tactical-danger/60 hover:border-tactical-danger hover:bg-tactical-danger/10 text-tactical-danger rounded text-xs font-mono text-left transition flex items-center justify-between">
+                            <span>🚨 Bagholdsangreb! (Løb)</span>
+                            <i class="fa-solid fa-play"></i>
+                        </button>
+                        <button onclick="triggerVoiceCue('stealth')" class="px-3 py-2 bg-tactical-bg border border-tactical-warn/60 hover:border-tactical-warn hover:bg-tactical-warn/10 text-tactical-warn rounded text-xs font-mono text-left transition flex items-center justify-between">
+                            <span>🤫 Snigeruter (Sænk fart)</span>
+                            <i class="fa-solid fa-play"></i>
+                        </button>
+                        <button onclick="triggerVoiceCue('loot')" class="px-3 py-2 bg-tactical-bg border border-tactical-success/60 hover:border-tactical-success hover:bg-tactical-success/10 text-tactical-success rounded text-xs font-mono text-left transition flex items-center justify-between">
+                            <span>💎 Ressource Sikret</span>
+                            <i class="fa-solid fa-play"></i>
+                        </button>
+                        <button onclick="triggerVoiceCue('status')" class="px-3 py-2 bg-tactical-bg border border-tactical-accent/60 hover:border-tactical-accent hover:bg-tactical-accent/10 text-tactical-accent rounded text-xs font-mono text-left transition flex items-center justify-between">
+                            <span>📡 Status Rapport</span>
+                            <i class="fa-solid fa-play"></i>
+                        </button>
+                        <button onclick="triggerVoiceCue('patrol')" class="px-3 py-2 bg-tactical-bg border border-gray-700 hover:border-gray-500 rounded text-xs font-mono text-left text-gray-300 transition flex items-center justify-between">
+                            <span>⚠️ Drone Patrulje</span>
+                            <i class="fa-solid fa-play"></i>
+                        </button>
+                        <button onclick="triggerVoiceCue('completed')" class="px-3 py-2 bg-tactical-bg border border-tactical-success/80 text-tactical-success rounded text-xs font-mono text-left transition flex items-center justify-between">
+                            <span>🏆 Mission Gennemført</span>
+                            <i class="fa-solid fa-play"></i>
+                        </button>
+                    </div>
+
+                    <!-- Custom Order input -->
+                    <div class="flex gap-2">
+                        <input id="customTtsInput" type="text" placeholder="Skriv brugerdefineret stemmeordre..." class="flex-1 bg-tactical-bg border border-tactical-border px-3 py-2 text-sm font-mono rounded focus:outline-none focus:border-tactical-accent text-white">
+                        <button onclick="sendCustomTts()" class="px-4 py-2 bg-tactical-accent hover:bg-cyan-400 text-black font-bold font-mono rounded text-xs transition uppercase">
+                            Send Tale
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Live Mission Narrative Event Log -->
+                <div class="bg-tactical-panel border border-tactical-border rounded-lg p-5 flex-1 flex flex-col min-h-[220px]">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-md font-bold uppercase tracking-wider text-gray-300 flex items-center gap-2">
+                            <i class="fa-solid fa-terminal text-tactical-accent"></i>
+                            Taktisk Hændelseslog (Genereret under ruten)
+                        </h3>
+                        <span class="text-xs font-mono text-gray-500">LIVE FEED</span>
+                    </div>
+                    <div id="missionLog" class="flex-1 bg-tactical-bg border border-tactical-border p-3 rounded font-mono text-xs overflow-y-auto max-h-56 space-y-2">
+                        <div class="text-gray-500">[00:00:00] Venter på at Felt-Enheden aktiveres og opretter forbindelse...</div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- RIGHT COLUMN: QR PAIRING & MISSION GENERATOR (5 Cols) -->
+            <div class="lg:col-span-5 flex flex-col space-y-6">
+                
+                <!-- Quick Test Button (Instant) -->
+                <div class="bg-gradient-to-r from-teal-900/40 to-cyan-900/40 border border-tactical-accent/50 rounded-lg p-4">
+                    <div class="flex items-center gap-3 mb-2">
+                        <i class="fa-solid fa-bolt text-tactical-accent text-xl"></i>
+                        <div>
+                            <div class="text-sm font-bold uppercase text-white">Øjeblikkelig Simulator & Test</div>
+                            <div class="text-xs text-gray-400">Test hele missionsflowet og stemmen direkte på skærmen uden scanning</div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+                        <button onclick="openSplitFieldUnit()" class="w-full py-2.5 bg-tactical-accent hover:bg-cyan-400 text-black font-bold uppercase text-xs rounded transition font-mono tracking-wider shadow-lg">
+                            <i class="fa-solid fa-play mr-1"></i> Start Lokal Simulator
+                        </button>
+                        <button onclick="launchFieldWindow()" class="w-full py-2.5 bg-tactical-bg border border-tactical-accent text-tactical-accent hover:bg-tactical-accent hover:text-black font-bold uppercase text-xs rounded transition font-mono tracking-wider shadow-lg">
+                            <i class="fa-solid fa-arrow-up-right-from-square mr-1"></i> Åbn i Nyt Vindue
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Universal Cloud Link / QR Code -->
+                <div class="bg-tactical-panel border border-tactical-border rounded-lg p-5 text-center flex flex-col items-center">
+                    <div class="flex items-center space-x-2 mb-2">
+                        <i class="fa-solid fa-tower-broadcast text-tactical-accent"></i>
+                        <h3 class="text-lg font-bold uppercase tracking-wider text-white">Universal Forbindelse (Mobil)</h3>
+                    </div>
+                    
+                    <p class="text-[11px] text-gray-300 mb-3 max-w-sm">
+                        Kører på lokal sandkasse-bus. Åbn felt-enheden i et separat faneblad eller skift direkte mellem PC og mobil.
+                    </p>
+
+                    <!-- Direct Open Link Display -->
+                    <div class="w-full mb-3 bg-tactical-bg border border-tactical-border p-2.5 rounded text-left font-mono text-xs">
+                        <div class="text-gray-400 text-[10px] uppercase mb-1">Aktiv Parringskanal:</div>
+                        <div class="flex gap-1.5 items-center">
+                            <input id="directMobileUrl" readonly value="LOKAL_SANDKASSE_FORBINDELSE" class="w-full bg-tactical-panel border border-gray-700 px-2 py-1 text-tactical-accent font-bold select-all text-xs rounded">
+                            <button onclick="copyMobileUrl()" class="px-2.5 py-1 bg-gray-800 hover:bg-gray-700 border border-gray-600 rounded text-xs">
+                                <i class="fa-regular fa-copy"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- QR Mount -->
+                    <div class="p-3 bg-white rounded-lg inline-block shadow-md relative">
+                        <div id="qrcode" class="w-44 h-44 flex items-center justify-center">
+                            <span class="text-xs text-gray-500 font-mono">Genererer QR...</span>
+                        </div>
+                    </div>
+
+                    <div class="mt-3 w-full bg-tactical-bg border border-tactical-border p-2 rounded text-left font-mono text-xs flex justify-between items-center">
+                        <span class="text-gray-400">PIN-kode til session:</span>
+                        <span id="sessionPinCode" class="text-tactical-accent font-bold text-sm tracking-widest">7705</span>
+                    </div>
+
+                    <div class="mt-3 p-2 bg-tactical-bg border border-tactical-border rounded w-full flex items-center justify-between text-xs font-mono">
+                        <div class="flex items-center gap-2">
+                            <span id="qrStatusDot" class="w-2.5 h-2.5 rounded-full bg-tactical-success"></span>
+                            <span id="qrStatusText" class="text-gray-300">Lokal Bus Klar</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mission Setup Generator -->
+                <div class="bg-tactical-panel border border-tactical-border rounded-lg p-5">
+                    <h3 class="text-md font-bold uppercase tracking-wider text-white mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-dna text-tactical-accent"></i>
+                        Dynamisk Mission Generator
+                    </h3>
+
+                    <div class="space-y-3 font-mono text-xs">
+                        <div>
+                            <label class="block text-gray-400 mb-1">Mission Type:</label>
+                            <select id="missionTypeSelect" class="w-full bg-tactical-bg border border-tactical-border p-2 rounded text-white focus:outline-none focus:border-tactical-accent">
+                                <option value="recon">Recon / Rekognoscering (Moderat tempo)</option>
+                                <option value="extraction">VIP Extraction (Hurtig march)</option>
+                                <option value="scavenge">Ressource Grind (Smedjens forsyninger)</option>
+                                <option value="escape">Flugt fra Bio-zombier (Intervaller)</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-gray-400 mb-1">Mål Distance: <span id="distTargetLabel" class="text-tactical-accent font-bold">3.0 km</span></label>
+                            <input id="distTargetSlider" type="range" min="0.5" max="15.0" step="0.5" value="3.0" class="w-full accent-tactical-accent">
+                        </div>
+
+                        <div class="pt-2">
+                            <button onclick="deployNewMission()" class="w-full py-2.5 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold tracking-wider rounded uppercase transition shadow-lg">
+                                <i class="fa-solid fa-paper-plane mr-1"></i> Udrul Ny Mission
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </main>
+
+        <!-- ========================================== -->
+        <!-- VIEW 2: FIELD UNIT SENSOR (MOBILE VIEW)    -->
+        <!-- ========================================== -->
+        <main id="mobileView" class="hidden flex-1 p-4 flex flex-col justify-between max-w-md mx-auto w-full">
+            
+            <!-- Mobile Header Bar -->
+            <div class="flex items-center justify-between border-b border-tactical-border pb-3">
+                <div class="flex items-center space-x-2">
+                    <span id="mobPulseDot" class="w-3 h-3 rounded-full bg-tactical-warn"></span>
+                    <span class="font-mono text-sm tracking-widest text-tactical-accent font-bold uppercase">FIELD SENSOR</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button id="ttsMuteBtn" onclick="toggleMute()" class="w-8 h-8 rounded border border-gray-700 bg-tactical-panel flex items-center justify-center text-tactical-accent text-sm">
+                        <i id="muteIcon" class="fa-solid fa-volume-high"></i>
+                    </button>
+                    <span id="mobileLinkBadge" class="text-[10px] font-mono px-2 py-0.5 rounded bg-gray-900 border border-tactical-warn text-tactical-warn">
+                        TILSLUTTER
+                    </span>
+                </div>
+            </div>
+
+            <!-- PIN Connection Bar (If Not Auto-paired) -->
+            <div id="mobPinBar" class="bg-tactical-panel border border-tactical-border p-2.5 rounded my-2 flex gap-2 items-center text-xs font-mono">
+                <span class="text-gray-400">PIN:</span>
+                <input id="mobPinInput" type="number" placeholder="PIN" class="w-20 bg-tactical-bg border border-gray-700 px-2 py-1 rounded text-white text-center font-bold">
+                <button onclick="connectWithPin()" class="flex-1 py-1 bg-tactical-accent text-black font-bold rounded uppercase">
+                    Kobl På
+                </button>
+            </div>
+
+            <!-- Primary High-Contrast AMOLED Display for Walking/Running -->
+            <div class="my-auto py-6 space-y-6 text-center">
+                
+                <!-- Speed Display (Primary Focus) -->
+                <div>
+                    <div class="text-xs font-mono text-gray-400 tracking-widest uppercase mb-1">AKTUEL HASTIGHED</div>
+                    <div id="mobSpeedVal" class="text-7xl font-mono font-bold text-white tracking-tighter glow-accent">
+                        0.0
+                    </div>
+                    <div class="text-sm font-mono text-tactical-accent font-bold tracking-widest mt-1">KM/T</div>
+                </div>
+
+                <!-- Secondary Telemetry Row -->
+                <div class="grid grid-cols-2 gap-4 pt-4 border-t border-b border-tactical-border/70 py-4">
+                    <div>
+                        <div class="text-xs font-mono text-gray-400 uppercase">Distance</div>
+                        <div id="mobDistVal" class="text-4xl font-mono font-bold text-white">0.00</div>
+                        <div class="text-xs font-mono text-gray-500">KM</div>
+                    </div>
+                    <div>
+                        <div class="text-xs font-mono text-gray-400 uppercase">Tempo</div>
+                        <div id="mobPaceVal" class="text-4xl font-mono font-bold text-tactical-warn">0'00"</div>
+                        <div class="text-xs font-mono text-gray-500">MIN/KM</div>
+                    </div>
+                </div>
+
+                <!-- Audio Transmission Status banner -->
+                <div class="bg-tactical-panel border border-tactical-border/90 p-3 rounded-lg text-left">
+                    <div class="text-[10px] font-mono text-tactical-accent uppercase flex items-center gap-1.5 mb-1">
+                        <i class="fa-solid fa-wave-square animate-pulse"></i>
+                        <span>Sidste Audio Ordre i Headset:</span>
+                    </div>
+                    <div id="mobLastAudioMsg" class="text-sm font-mono text-gray-200 italic">
+                        "Venter på signal fra PC Command..."
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Sensor Activation & Simulation Controls -->
+            <div class="space-y-3 font-mono">
+                
+                <!-- GPS Activation Button -->
+                <button id="gpsToggleBtn" onclick="toggleGpsTracking()" class="w-full py-4 bg-tactical-panel border-2 border-tactical-accent hover:bg-tactical-accent hover:text-black text-tactical-accent font-bold rounded-lg uppercase tracking-wider text-sm transition shadow-lg flex items-center justify-center gap-2">
+                    <i id="gpsIcon" class="fa-solid fa-location-crosshairs text-lg"></i>
+                    <span id="gpsBtnText">Start Real GPS Tracking</span>
+                </button>
+
+                <!-- Test Simulator Drawer -->
+                <div class="bg-tactical-panel border border-tactical-border rounded-lg p-3 text-xs">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-gray-400 uppercase font-bold">Simulator (Styr farten manuelt):</span>
+                        <span id="simSpeedDisplay" class="text-tactical-accent font-mono font-bold">0.0 km/t</span>
+                    </div>
+                    <input id="simSpeedSlider" type="range" min="0" max="18" step="0.5" value="0" class="w-full accent-tactical-accent mb-2">
+                    <div class="flex gap-2">
+                        <button onclick="setSimSpeed(0)" class="flex-1 py-1 bg-tactical-bg border border-gray-700 rounded text-gray-300">Stop (0)</button>
+                        <button onclick="setSimSpeed(5.5)" class="flex-1 py-1 bg-tactical-bg border border-gray-700 rounded text-gray-300">Gå (5.5)</button>
+                        <button onclick="setSimSpeed(10.5)" class="flex-1 py-1 bg-tactical-bg border border-gray-700 rounded text-gray-300">Løb (10.5)</button>
+                    </div>
+                </div>
+
+            </div>
+
+        </main>
+
+        <!-- FOOTER BAR -->
+        <footer class="w-full bg-tactical-panel border-t border-tactical-border px-4 py-2 text-center text-xs font-mono text-gray-500">
+            <span>AEGIS TACTICAL PROTOCOL • SANDBOX BUS • REALTID TELEMETRI & TALE</span>
+        </footer>
+
+    </div>
+
+    <!-- SCRIPT & ENGINE -->
+    <script>
+        /* ==========================================================================
+           STATE & CONFIGURATION
+           ========================================================================== */
+        const state = {
+            role: 'host', // 'host' or 'field'
+            pin: '7705',
+            channelName: 'aegis_channel_7705',
+            broadcastChannel: null,
+            connected: false,
+            
+            // Telemetry
+            speed: 0.0,
+            distance: 0.0,
+            pace: "0'00\"",
+            durationSeconds: 0,
+            timerInterval: null,
+            
+            // Objective
+            targetDistance: 3.0,
+            objectiveName: "Infiltrer Sektor 7",
+            missionType: "recon",
+            missionComplete: false,
+            halfwayAnnounced: false,
+            
+            // GPS state
+            gpsWatchId: null,
+            lastCoords: null,
+            lastTimestamp: null,
+            gpsActive: false,
+            
+            // Simulator state
+            simInterval: null,
+            simSpeed: 0.0,
+            
+            // Speech
+            ttsMuted: false,
+            lastVoiceMessage: ""
+        };
+
+        /* ==========================================================================
+           INITIALIZATION & ROUTING
+           ========================================================================== */
+        window.addEventListener('DOMContentLoaded', () => {
+            state.pin = Math.floor(1000 + Math.random() * 9000).toString();
+            state.channelName = `aegis_channel_${state.pin}`;
+
+            const pinDisplay = document.getElementById('sessionPinCode');
+            if (pinDisplay) pinDisplay.innerText = state.pin;
+
+            const params = new URLSearchParams(window.location.search);
+            const targetPin = params.get('pin');
+            const requestedRole = params.get('role');
+
+            if (targetPin || requestedRole === 'field') {
+                if (targetPin) {
+                    state.pin = targetPin;
+                    state.channelName = `aegis_channel_${state.pin}`;
+                }
+                setRole('field');
+            } else {
+                setRole('host');
+                renderQrCode(state.pin);
+            }
+
+            initSandboxBus();
+            setupUIEventListeners();
+        });
+
+        function setRole(newRole) {
+            state.role = newRole;
+            const hostView = document.getElementById('hostView');
+            const mobileView = document.getElementById('mobileView');
+            const toggleRoleBtn = document.getElementById('toggleRoleBtn');
+            const systemModeBadge = document.getElementById('systemModeBadge');
+
+            if (newRole === 'host') {
+                hostView.classList.remove('hidden');
+                mobileView.classList.add('hidden');
+                toggleRoleBtn.innerText = "SKIFT TIL MOBIL VISNING";
+                systemModeBadge.innerText = "HOST COMMAND [PC]";
+                systemModeBadge.className = "text-tactical-accent";
+            } else {
+                hostView.classList.add('hidden');
+                mobileView.classList.remove('hidden');
+                toggleRoleBtn.innerText = "SKIFT TIL PC HOST";
+                systemModeBadge.innerText = "FIELD UNIT [MOBILE]";
+                systemModeBadge.className = "text-tactical-success";
+
+                const mobPin = document.getElementById('mobPinInput');
+                if (mobPin) mobPin.value = state.pin;
+            }
+        }
+
+        /* ==========================================================================
+           SANDBOX BUS (BroadcastChannel + LocalStorage Event Fallback)
+           ========================================================================== */
+        function initSandboxBus() {
+            updateConnStatus("LOKAL BUS AKTIV", "success");
+
+            if ('BroadcastChannel' in window) {
+                try {
+                    state.broadcastChannel = new BroadcastChannel(state.channelName);
+                    state.broadcastChannel.onmessage = (event) => {
+                        handleIncomingPacket(event.data);
+                    };
+                } catch (e) {
+                    console.warn("BroadcastChannel restricted, falling back to storage bus", e);
+                }
+            }
+
+            // Cross-window / iframe storage listener fallback
+            window.addEventListener('storage', (e) => {
+                if (e.key === state.channelName && e.newValue) {
+                    try {
+                        const parsed = JSON.parse(e.newValue);
+                        handleIncomingPacket(parsed);
+                    } catch (err) {}
+                }
+            });
+
+            // If starting as field, announce presence immediately
+            if (state.role === 'field') {
+                sendPacket('HANDSHAKE_INIT', { role: 'field' });
+            }
+        }
+
+        function sendPacket(type, payload) {
+            const packet = {
+                senderRole: state.role,
+                type: type,
+                payload: payload,
+                timestamp: Date.now()
+            };
+
+            // 1. BroadcastChannel dispatch
+            if (state.broadcastChannel) {
+                try {
+                    state.broadcastChannel.postMessage(packet);
+                } catch (e) {}
+            }
+
+            // 2. Storage event dispatch
+            try {
+                localStorage.setItem(state.channelName, JSON.stringify(packet));
+            } catch (e) {}
+        }
+
+        function handleIncomingPacket(packet) {
+            if (!packet || packet.senderRole === state.role) return;
+
+            switch (packet.type) {
+                case 'HANDSHAKE_INIT':
+                    if (state.role === 'host') {
+                        state.connected = true;
+                        updateConnStatus("FORBUNDET TIL FELT-ENHED", "success");
+                        updateQrStatusConnected();
+                        logMissionEvent("Mobil felt-enhed tilsluttet via taktisk datalink.");
+                        startMissionTimer();
+                        sendMissionObjectiveToMobile();
+                        sendPacket('HANDSHAKE_ACK', { status: 'ready' });
+                        speakVoice("Felt-enhed tilsluttet. Mission i gang.");
+                    }
+                    break;
+
+                case 'HANDSHAKE_ACK':
+                    if (state.role === 'field') {
+                        state.connected = true;
+                        updateConnStatus("FORBUNDET TIL PC", "success");
+                        const badge = document.getElementById('mobileLinkBadge');
+                        const dot = document.getElementById('mobPulseDot');
+                        if (badge) {
+                            badge.innerText = "FORBUNDET";
+                            badge.className = "text-[10px] font-mono px-2 py-0.5 rounded bg-gray-900 border border-tactical-success text-tactical-success";
+                        }
+                        if (dot) dot.className = "w-3 h-3 rounded-full bg-tactical-success animate-ping";
+                        speakVoice("Forbindelse til PC bekræftet.");
+                    }
+                    break;
+
+                case 'TELEMETRY':
+                    if (state.role === 'host') {
+                        updateHostTelemetry(packet.payload);
+                        checkMissionMilestones(packet.payload);
+                    }
+                    break;
+
+                case 'VOICE_CUE':
+                    if (state.role === 'field') {
+                        speakVoice(packet.payload.text);
+                        const msgBox = document.getElementById('mobLastAudioMsg');
+                        if (msgBox) msgBox.innerText = `"${packet.payload.text}"`;
+                    }
+                    break;
+
+                case 'OBJECTIVE_SYNC':
+                    state.targetDistance = packet.payload.target;
+                    state.objectiveName = packet.payload.name;
+                    break;
+            }
+        }
+
+        function connectWithPin() {
+            const input = document.getElementById('mobPinInput');
+            const val = input.value.trim();
+            if (!val) return;
+
+            state.pin = val;
+            state.channelName = `aegis_channel_${state.pin}`;
+
+            if (state.broadcastChannel) {
+                try { state.broadcastChannel.close(); } catch (e) {}
+            }
+
+            if ('BroadcastChannel' in window) {
+                state.broadcastChannel = new BroadcastChannel(state.channelName);
+                state.broadcastChannel.onmessage = (event) => {
+                    handleIncomingPacket(event.data);
+                };
+            }
+
+            sendPacket('HANDSHAKE_INIT', { role: 'field' });
+            updateConnStatus("SØGER PC...", "warn");
+        }
+
+        function updateQrStatusConnected() {
+            const qrStatusDot = document.getElementById('qrStatusDot');
+            const qrStatusText = document.getElementById('qrStatusText');
+            const hostPulse = document.getElementById('hostPulseDot');
+            if (qrStatusDot && qrStatusText) {
+                qrStatusDot.className = "w-2.5 h-2.5 rounded-full bg-tactical-success";
+                qrStatusText.innerText = "Mobil Forbundet!";
+            }
+            if (hostPulse) hostPulse.className = "w-2.5 h-2.5 rounded-full bg-tactical-success animate-ping";
+        }
+
+        function openSplitFieldUnit() {
+            state.connected = true;
+            updateConnStatus("SIMULATOR AKTIV", "success");
+            updateQrStatusConnected();
+            logMissionEvent("Test-sensor aktiveret. Går til mobilvisning.");
+            startMissionTimer();
+            setRole('field');
+            setSimSpeed(5.5);
+            setTimeout(() => {
+                speakVoice("Felt-enhed aktiveret. Telemetri live. Begynd fremrykning.");
+            }, 400);
+        }
+
+        function launchFieldWindow() {
+            const targetUrl = `${window.location.pathname}?pin=${state.pin}&role=field`;
+            window.open(targetUrl, '_blank', 'width=420,height=780');
+        }
+
+        /* ==========================================================================
+           QR CODE GENERATOR
+           ========================================================================== */
+        function renderQrCode(pin) {
+            const qrContainer = document.getElementById('qrcode');
+            if (!qrContainer) return;
+            qrContainer.innerHTML = "";
+
+            const pairingCode = `AEGIS-FIELD-${pin}`;
+
+            const directInput = document.getElementById('directMobileUrl');
+            if (directInput) directInput.value = pairingCode;
+
+            try {
+                new QRCode(qrContainer, {
+                    text: pairingCode,
+                    width: 176,
+                    height: 176,
+                    colorDark: "#05070a",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.M
+                });
+            } catch (err) {
+                qrContainer.innerHTML = `<span class="text-xs font-mono text-tactical-accent">PIN: ${pin}</span>`;
+            }
+        }
+
+        function copyMobileUrl() {
+            const input = document.getElementById('directMobileUrl');
+            input.select();
+            document.execCommand('copy');
+            logMissionEvent("Parringskode kopieret.");
+        }
+
+        /* ==========================================================================
+           TELEMETRY, SENSORS & GPS ENGINE
+           ========================================================================== */
+        function toggleGpsTracking() {
+            const btnText = document.getElementById('gpsBtnText');
+            const gpsIcon = document.getElementById('gpsIcon');
+
+            if (!state.gpsActive) {
+                if (!navigator.geolocation) {
+                    logMissionEvent("⚠️ FEJL: GPS geolokation ikke understøttet.");
+                    return;
+                }
+
+                speakVoice("GPS sensor aktiveret. Søger satellitter.");
+
+                state.gpsWatchId = navigator.geolocation.watchPosition(
+                    onGpsSuccess,
+                    onGpsError,
+                    { enableHighAccuracy: true, maximumAge: 1000, timeout: 10000 }
+                );
+
+                state.gpsActive = true;
+                btnText.innerText = "Stop GPS Tracking";
+                gpsIcon.className = "fa-solid fa-circle-stop text-tactical-danger";
+            } else {
+                if (state.gpsWatchId) {
+                    navigator.geolocation.clearWatch(state.gpsWatchId);
+                }
+                state.gpsActive = false;
+                btnText.innerText = "Start Real GPS Tracking";
+                gpsIcon.className = "fa-solid fa-location-crosshairs text-lg";
+                speakVoice("GPS tracking afbrudt.");
+            }
+        }
+
+        function onGpsSuccess(position) {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            const timestamp = position.timestamp;
+            let currentSpeed = 0;
+
+            if (position.coords.speed !== null && !isNaN(position.coords.speed)) {
+                currentSpeed = position.coords.speed * 3.6;
+            }
+
+            if (state.lastCoords) {
+                const distIncrement = calculateHaversineDistance(
+                    state.lastCoords.lat,
+                    state.lastCoords.lon,
+                    lat,
+                    lon
+                );
+
+                if (distIncrement > 0.002) {
+                    state.distance += distIncrement;
+                    
+                    if (currentSpeed === 0 && state.lastTimestamp) {
+                        const timeDeltaHours = (timestamp - state.lastTimestamp) / 3600000;
+                        if (timeDeltaHours > 0) {
+                            currentSpeed = distIncrement / timeDeltaHours;
+                        }
+                    }
+                }
+            }
+
+            state.lastCoords = { lat, lon };
+            state.lastTimestamp = timestamp;
+            state.speed = Math.max(0, currentSpeed);
+
+            syncAndBroadcastTelemetry();
+        }
+
+        function onGpsError(err) {
+            console.warn("GPS Warning:", err.message);
+        }
+
+        function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a =
+                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c;
+        }
+
+        /* ==========================================================================
+           WALK SIMULATOR (TEST)
+           ========================================================================== */
+        function setSimSpeed(speedVal) {
+            document.getElementById('simSpeedSlider').value = speedVal;
+            document.getElementById('simSpeedDisplay').innerText = `${speedVal.toFixed(1)} km/t`;
+            state.simSpeed = parseFloat(speedVal);
+
+            if (state.simSpeed > 0 && !state.simInterval) {
+                startSimulatorWalk();
+            } else if (state.simSpeed === 0) {
+                state.speed = 0;
+                syncAndBroadcastTelemetry();
+            }
+        }
+
+        function startSimulatorWalk() {
+            if (state.simInterval) clearInterval(state.simInterval);
+
+            state.simInterval = setInterval(() => {
+                if (state.simSpeed > 0) {
+                    const jitter = (Math.random() - 0.5) * 0.4;
+                    state.speed = Math.max(0.5, state.simSpeed + jitter);
+
+                    const kmPerSec = state.speed / 3600;
+                    state.distance += kmPerSec;
+
+                    syncAndBroadcastTelemetry();
+                }
+            }, 1000);
+        }
+
+        function syncAndBroadcastTelemetry() {
+            if (state.speed > 0.5) {
+                const totalMinutesPerKm = 60 / state.speed;
+                const minutes = Math.floor(totalMinutesPerKm);
+                const seconds = Math.floor((totalMinutesPerKm - minutes) * 60);
+                state.pace = `${minutes}'${seconds.toString().padStart(2, '0')}"`;
+            } else {
+                state.pace = "0'00\"";
+            }
+
+            const mobSpeed = document.getElementById('mobSpeedVal');
+            const mobDist = document.getElementById('mobDistVal');
+            const mobPace = document.getElementById('mobPaceVal');
+
+            if (mobSpeed) mobSpeed.innerText = state.speed.toFixed(1);
+            if (mobDist) mobDist.innerText = state.distance.toFixed(2);
+            if (mobPace) mobPace.innerText = state.pace;
+
+            const telemetryPayload = {
+                speed: state.speed,
+                distance: state.distance,
+                pace: state.pace,
+                duration: state.durationSeconds
+            };
+
+            sendPacket('TELEMETRY', telemetryPayload);
+            updateHostTelemetry(telemetryPayload);
+            checkMissionMilestones(telemetryPayload);
+        }
+
+        function updateHostTelemetry(payload) {
+            const hSpeed = document.getElementById('hostSpeedVal');
+            const hDist = document.getElementById('hostDistVal');
+            const hPace = document.getElementById('hostPaceVal');
+
+            if (hSpeed) hSpeed.innerText = payload.speed.toFixed(1);
+            if (hDist) hDist.innerText = payload.distance.toFixed(2);
+            if (hPace) hPace.innerText = payload.pace;
+
+            const percent = Math.min(100, Math.round((payload.distance / state.targetDistance) * 100));
+            const progressPercent = document.getElementById('hostProgressPercent');
+            const progressBar = document.getElementById('hostProgressBar');
+
+            if (progressPercent) progressPercent.innerText = `${percent}%`;
+            if (progressBar) progressBar.style.width = `${percent}%`;
+        }
+
+        /* ==========================================================================
+           SPEECH SYNTHESIS ENGINE (TTS)
+           ========================================================================== */
+        function speakVoice(text) {
+            if (state.ttsMuted) return;
+
+            state.lastVoiceMessage = text;
+
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'da-DK';
+                utterance.rate = 1.05;
+                utterance.pitch = 0.95;
+
+                const voices = window.speechSynthesis.getVoices();
+                const dkVoice = voices.find(v => v.lang && (v.lang.includes('da') || v.lang.includes('DK')));
+                if (dkVoice) utterance.voice = dkVoice;
+
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        function toggleMute() {
+            state.ttsMuted = !state.ttsMuted;
+            const muteIcon = document.getElementById('muteIcon');
+            if (state.ttsMuted) {
+                if (muteIcon) muteIcon.className = "fa-solid fa-volume-xmark text-tactical-danger";
+                window.speechSynthesis.cancel();
+            } else {
+                if (muteIcon) muteIcon.className = "fa-solid fa-volume-high text-tactical-accent";
+                speakVoice("Lyd aktiveret.");
+            }
+        }
+
+        function triggerVoiceCue(type) {
+            let message = "";
+            switch (type) {
+                case 'ambush':
+                    message = "Advarsel! Fjendtlige sensorer har spottet dig. Øg hastigheden med det samme for at undslippe bagholdet!";
+                    logMissionEvent("🚨 HÆNDELSE: Fjendtlig patrulje opdaget. Operative beordret til sprint!");
+                    break;
+                case 'stealth':
+                    message = "Fjendtlig drone overflyvning i din sektor. Sænk farten og hold dig i dækning indtil signalet er klart.";
+                    logMissionEvent("🤫 HÆNDELSE: Drone passerer. Lydsvag infiltration påkrævet.");
+                    break;
+                case 'loot':
+                    message = "Ressourcecontainer lokaliseret. Materialer til basen overført til din profil.";
+                    logMissionEvent("💎 FORSYNING: 50 Titanium og 200 Ammunition opsamlet.");
+                    break;
+                case 'status':
+                    message = `Status rapport: Du har tilbagelagt ${state.distance.toFixed(1)} kilometer. Dit tempo er stabilt. Fortsæt fremrykning.`;
+                    logMissionEvent(`📡 TELEMETRI TJEK: ${state.distance.toFixed(2)} km bekræftet.`);
+                    break;
+                case 'patrol':
+                    message = "Patrulje passerer 200 meter foran dig. Drej svagt til højre ad næste sti.";
+                    logMissionEvent("⚠️ TAKTISK OMLÆGNING: Kurs korrektion sendt.");
+                    break;
+                case 'completed':
+                    message = "Målet er nået! Fremragende indsats, Runner Five. Mission gennemført.";
+                    logMissionEvent("🏆 MISSION SUCCES: Sektor sikret. Opgave godkendt.");
+                    break;
+            }
+
+            dispatchAudioCue(message);
+        }
+
+        function sendCustomTts() {
+            const input = document.getElementById('customTtsInput');
+            const text = input.value.trim();
+            if (!text) return;
+
+            dispatchAudioCue(text);
+            logMissionEvent(`COMMS: "${text}"`);
+            input.value = "";
+        }
+
+        function dispatchAudioCue(text) {
+            sendPacket('VOICE_CUE', { text });
+            speakVoice(text);
+            
+            const mobAudioMsg = document.getElementById('mobLastAudioMsg');
+            if (mobAudioMsg) mobAudioMsg.innerText = `"${text}"`;
+        }
+
+        /* ==========================================================================
+           MISSION LOGIC
+           ========================================================================== */
+        function checkMissionMilestones(payload) {
+            if (state.missionComplete) return;
+
+            if (payload.distance >= (state.targetDistance / 2) && !state.halfwayAnnounced) {
+                state.halfwayAnnounced = true;
+                dispatchAudioCue("Halvdelen af ruten er gennemført. Energikilder på basen genoplades.");
+                logMissionEvent("⚡ MILEPÆL: 50% af distancen nået.");
+            }
+
+            if (payload.distance >= state.targetDistance) {
+                state.missionComplete = true;
+                triggerVoiceCue('completed');
+            }
+        }
+
+        function deployNewMission() {
+            const type = document.getElementById('missionTypeSelect').value;
+            const dist = parseFloat(document.getElementById('distTargetSlider').value);
+
+            state.targetDistance = dist;
+            state.missionType = type;
+            state.distance = 0.0;
+            state.speed = 0.0;
+            state.missionComplete = false;
+            state.halfwayAnnounced = false;
+
+            let missionName = "Infiltrer Sektor 7";
+            if (type === 'extraction') missionName = "VIP Ekstraktion fra Z-Zone";
+            if (type === 'scavenge') missionName = "Smedjens Råstof Indsamling";
+            if (type === 'escape') missionName = "Flugt fra Bio-Infektionen";
+
+            state.objectiveName = `${missionName} (${dist.toFixed(1)} km)`;
+            const hostObj = document.getElementById('hostObjectiveText');
+            if (hostObj) hostObj.innerText = state.objectiveName;
+
+            sendMissionObjectiveToMobile();
+            logMissionEvent(`NY MISSION UDRULLET: ${state.objectiveName}`);
+            dispatchAudioCue(`Ny mission modtaget. Opgave: ${missionName}. Mål: ${dist.toFixed(1)} kilometer.`);
+        }
+
+        function sendMissionObjectiveToMobile() {
+            sendPacket('OBJECTIVE_SYNC', {
+                target: state.targetDistance,
+                name: state.objectiveName
+            });
+        }
+
+        function startMissionTimer() {
+            if (state.timerInterval) clearInterval(state.timerInterval);
+            state.durationSeconds = 0;
+
+            state.timerInterval = setInterval(() => {
+                state.durationSeconds++;
+                const mins = Math.floor(state.durationSeconds / 60);
+                const secs = state.durationSeconds % 60;
+                const timeString = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+                
+                const hostTime = document.getElementById('hostTimeVal');
+                if (hostTime) hostTime.innerText = timeString;
+            }, 1000);
+        }
+
+        function logMissionEvent(message) {
+            const logBox = document.getElementById('missionLog');
+            if (!logBox) return;
+
+            const now = new Date();
+            const timeCode = now.toTimeString().split(' ')[0];
+            const logEntry = document.createElement('div');
+            logEntry.className = "text-gray-300 border-l border-tactical-accent pl-2 py-0.5";
+            logEntry.innerHTML = `<span class="text-gray-500">[${timeCode}]</span> ${message}`;
+
+            logBox.appendChild(logEntry);
+            logBox.scrollTop = logBox.scrollHeight;
+        }
+
+        function updateConnStatus(text, level) {
+            const badge = document.getElementById('connStatusText');
+            if (!badge) return;
+            badge.innerText = text;
+            if (level === 'success') badge.className = "text-tactical-success font-bold";
+            else if (level === 'warn') badge.className = "text-tactical-warn font-bold";
+            else if (level === 'danger') badge.className = "text-tactical-danger font-bold";
+        }
+
+        function setupUIEventListeners() {
+            document.getElementById('toggleRoleBtn').addEventListener('click', () => {
+                const nextRole = (state.role === 'host') ? 'field' : 'host';
+                setRole(nextRole);
+            });
+
+            const slider = document.getElementById('distTargetSlider');
+            if (slider) {
+                slider.addEventListener('input', (e) => {
+                    document.getElementById('distTargetLabel').innerText = `${parseFloat(e.target.value).toFixed(1)} km`;
+                });
+            }
+
+            const simSlider = document.getElementById('simSpeedSlider');
+            if (simSlider) {
+                simSlider.addEventListener('input', (e) => {
+                    setSimSpeed(parseFloat(e.target.value));
+                });
+            }
+        }
+    </script>
+</body>
+</html>
