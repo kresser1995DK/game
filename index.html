@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AEGIS OPERATIVE // Tactical Mission Runner</title>
+    <title>AEGIS OPERATIVE // Tactical Mission Runner & Base Ops</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- QRCode.js CDN for pairing link generation -->
@@ -30,7 +30,9 @@
                             accent: '#00f0ff',
                             warn: '#ffb703',
                             danger: '#ff0055',
-                            success: '#00ff66'
+                            success: '#00ff66',
+                            purple: '#b5179e',
+                            gold: '#ffd166'
                         }
                     },
                     fontFamily: {
@@ -57,8 +59,8 @@
         .glow-accent { text-shadow: 0 0 10px rgba(0, 240, 255, 0.65); }
         .glow-danger { text-shadow: 0 0 10px rgba(255, 0, 85, 0.65); }
         .glow-success { text-shadow: 0 0 10px rgba(0, 255, 102, 0.65); }
+        .glow-gold { text-shadow: 0 0 10px rgba(255, 209, 102, 0.65); }
 
-        /* Strict view isolation to ensure views never bleed into each other */
         .view-hidden {
             display: none !important;
         }
@@ -81,7 +83,7 @@
             <div class="flex items-center space-x-3">
                 <i class="fa-solid fa-satellite-dish text-tactical-accent animate-pulse text-xl"></i>
                 <div>
-                    <h1 class="text-lg font-bold tracking-widest text-white uppercase font-tactical">AEGIS // OPERATIVE COMMS</h1>
+                    <h1 class="text-lg font-bold tracking-widest text-white uppercase font-tactical">AEGIS // TACTICAL COMMS & BASE COMMAND</h1>
                     <div class="text-xs font-mono text-gray-400 flex items-center gap-2">
                         <span>SYS: <span id="systemModeBadge" class="text-tactical-accent font-bold">HOST COMMAND [PC]</span></span>
                         <span>•</span>
@@ -103,7 +105,7 @@
         <!-- ========================================== -->
         <main id="hostView" class="view-active-grid flex-1 p-4 md:p-6 grid-cols-1 lg:grid-cols-12 gap-6 max-w-7xl mx-auto w-full">
             
-            <!-- LEFT COLUMN: OPERATIVE TELEMETRY (7 Cols) -->
+            <!-- LEFT COLUMN: OPERATIVE TELEMETRY & COMMS (7 Cols) -->
             <div class="lg:col-span-7 flex flex-col space-y-6">
                 
                 <!-- Telemetry Cards -->
@@ -153,6 +155,104 @@
                         </div>
                         <div class="w-full bg-tactical-bg border border-tactical-border h-3 rounded-full overflow-hidden p-0.5">
                             <div id="hostProgressBar" class="h-full bg-gradient-to-r from-tactical-accent to-tactical-success w-0 rounded-full transition-all duration-300 shadow-lg"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BASE OPERATIONS & CRAFTING WORKSHOP (SMEDJEN) -->
+                <div class="bg-tactical-panel border border-tactical-border rounded-lg p-5">
+                    <div class="flex justify-between items-center border-b border-tactical-border pb-3 mb-4">
+                        <h3 class="text-md font-bold uppercase tracking-wider text-tactical-gold flex items-center gap-2">
+                            <i class="fa-solid fa-screwdriver-wrench"></i>
+                            Smedjen & Base Operations
+                        </h3>
+                        <span class="text-xs font-mono text-gray-400">BASIS NIVEAU: <span id="baseLevelBadge" class="text-tactical-accent font-bold">MK I</span></span>
+                    </div>
+
+                    <!-- Resource Bank Display -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5 font-mono">
+                        <div class="bg-tactical-bg border border-tactical-border p-2.5 rounded flex items-center gap-3">
+                            <i class="fa-solid fa-cubes text-tactical-accent text-xl"></i>
+                            <div>
+                                <div class="text-[10px] text-gray-400 uppercase">Titanium</div>
+                                <div id="resTitanium" class="text-lg font-bold text-white">0</div>
+                            </div>
+                        </div>
+
+                        <div class="bg-tactical-bg border border-tactical-border p-2.5 rounded flex items-center gap-3">
+                            <i class="fa-solid fa-bolt text-tactical-warn text-xl"></i>
+                            <div>
+                                <div class="text-[10px] text-gray-400 uppercase">Energi-Celler</div>
+                                <div id="resEnergy" class="text-lg font-bold text-white">0</div>
+                            </div>
+                        </div>
+
+                        <div class="bg-tactical-bg border border-tactical-border p-2.5 rounded flex items-center gap-3">
+                            <i class="fa-solid fa-microchip text-tactical-success text-xl"></i>
+                            <div>
+                                <div class="text-[10px] text-gray-400 uppercase">Elektronik</div>
+                                <div id="resElectronics" class="text-lg font-bold text-white">0</div>
+                            </div>
+                        </div>
+
+                        <div class="bg-tactical-bg border border-tactical-border p-2.5 rounded flex items-center gap-3">
+                            <i class="fa-solid fa-gem text-tactical-purple text-xl"></i>
+                            <div>
+                                <div class="text-[10px] text-gray-400 uppercase">Data Cores</div>
+                                <div id="resDataCores" class="text-lg font-bold text-tactical-gold">0</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Workshop Upgrade Tabs / Actions -->
+                    <div class="space-y-3 font-mono text-xs">
+                        <div class="text-gray-300 font-bold uppercase tracking-wider text-[11px] mb-1">Byg & Opgrader Faciliteter:</div>
+                        
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <!-- Upgrade 1: Radar Satellit -->
+                            <div class="bg-tactical-bg border border-tactical-border p-3 rounded flex flex-col justify-between">
+                                <div>
+                                    <div class="flex justify-between items-center mb-1">
+                                        <span class="font-bold text-white">📡 Langtrækkende Radar</span>
+                                        <span id="lvlRadar" class="text-tactical-accent font-bold">Lvl 1</span>
+                                    </div>
+                                    <p class="text-[11px] text-gray-400 mb-2 leading-tight">Øger ressource-høst per 250m tilbagelagt med +25%.</p>
+                                    <div class="text-[10px] text-tactical-warn mb-3">Pris: 40 Titanium • 20 Energi</div>
+                                </div>
+                                <button onclick="upgradeFacility('radar')" class="w-full py-1.5 bg-tactical-panel border border-tactical-accent hover:bg-tactical-accent hover:text-black text-tactical-accent font-bold rounded uppercase transition">
+                                    Opgrader
+                                </button>
+                            </div>
+
+                            <!-- Upgrade 2: Exoskeleton Støvler -->
+                            <div class="bg-tactical-bg border border-tactical-border p-3 rounded flex flex-col justify-between">
+                                <div>
+                                    <div class="flex justify-between items-center mb-1">
+                                        <span class="font-bold text-white">🦿 Bioniske Støvler</span>
+                                        <span id="lvlBoots" class="text-tactical-accent font-bold">Lvl 1</span>
+                                    </div>
+                                    <p class="text-[11px] text-gray-400 mb-2 leading-tight">Giver Data Core bonus, når løberen holder over 9.0 km/t.</p>
+                                    <div class="text-[10px] text-tactical-warn mb-3">Pris: 35 Elektronik • 30 Titanium</div>
+                                </div>
+                                <button onclick="upgradeFacility('boots')" class="w-full py-1.5 bg-tactical-panel border border-tactical-accent hover:bg-tactical-accent hover:text-black text-tactical-accent font-bold rounded uppercase transition">
+                                    Opgrader
+                                </button>
+                            </div>
+
+                            <!-- Upgrade 3: Forsvarstårn -->
+                            <div class="bg-tactical-bg border border-tactical-border p-3 rounded flex flex-col justify-between">
+                                <div>
+                                    <div class="flex justify-between items-center mb-1">
+                                        <span class="font-bold text-white">🛡️ Forsvarsperimeter</span>
+                                        <span id="lvlDefense" class="text-tactical-accent font-bold">Lvl 1</span>
+                                    </div>
+                                    <p class="text-[11px] text-gray-400 mb-2 leading-tight">Beskytter basens lagre mod bagholdsangreb under missionen.</p>
+                                    <div class="text-[10px] text-tactical-warn mb-3">Pris: 50 Energi • 2 Data Cores</div>
+                                </div>
+                                <button onclick="upgradeFacility('defense')" class="w-full py-1.5 bg-tactical-panel border border-tactical-accent hover:bg-tactical-accent hover:text-black text-tactical-accent font-bold rounded uppercase transition">
+                                    Opgrader
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -261,10 +361,10 @@
                         <div>
                             <label class="block text-gray-400 mb-1">Mission Type:</label>
                             <select id="missionTypeSelect" class="w-full bg-tactical-bg border border-tactical-border p-2 rounded text-white focus:outline-none focus:border-tactical-accent">
-                                <option value="recon">Recon / Rekognoscering (Moderat tempo)</option>
-                                <option value="extraction">VIP Extraction (Hurtig march)</option>
-                                <option value="scavenge">Ressource Grind (Smedjens forsyninger)</option>
-                                <option value="escape">Flugt fra Bio-zombier (Intervaller)</option>
+                                <option value="recon">Recon / Rekognoscering (Balanceret)</option>
+                                <option value="scavenge">Råstof Ekstraktion (+50% Titanium/Energi)</option>
+                                <option value="escape">Flugt fra Bio-Zombier (+Data Cores ved sprint)</option>
+                                <option value="tech">Teknologi Raid (+Elektronik forsyninger)</option>
                             </select>
                         </div>
 
@@ -383,7 +483,7 @@
 
         <!-- FOOTER BAR -->
         <footer class="w-full bg-tactical-panel border-t border-tactical-border px-4 py-2 text-center text-xs font-mono text-gray-500">
-            <span>AEGIS TACTICAL PROTOCOL • WEBRTC LIVE DATALINK • 5G / WI-FI</span>
+            <span>AEGIS TACTICAL PROTOCOL • WEBRTC LIVE DATALINK • BASE OPS SYSTEM</span>
         </footer>
 
     </div>
@@ -410,6 +510,20 @@
             missionType: "recon",
             missionComplete: false,
             halfwayAnnounced: false,
+            lastHarvestDistance: 0.0,
+            
+            // Base Building Resources (Persisted locally on PC)
+            resources: {
+                titanium: 15,
+                energy: 20,
+                electronics: 5,
+                dataCores: 0
+            },
+            facilities: {
+                radar: 1,
+                boots: 1,
+                defense: 1
+            },
             
             // GPS state
             gpsWatchId: null,
@@ -428,11 +542,12 @@
         };
 
         window.addEventListener('DOMContentLoaded', () => {
+            loadBaseGameData();
+
             const params = new URLSearchParams(window.location.search);
             const targetPin = params.get('pin');
             const requestedRole = params.get('role');
             
-            // Auto-detect mobile devices or specific query params
             const isMobileBrowser = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || window.innerWidth < 768;
 
             if (targetPin || requestedRole === 'field' || isMobileBrowser) {
@@ -448,8 +563,154 @@
             }
 
             setupUIEventListeners();
+            renderBaseResources();
         });
 
+        /* ==========================================================================
+           BASE OPERATIONS, INVENTORY & CRAFTING
+           ========================================================================== */
+        function loadBaseGameData() {
+            try {
+                const savedRes = localStorage.getItem('aegis_base_resources');
+                const savedFac = localStorage.getItem('aegis_base_facilities');
+                if (savedRes) state.resources = Object.assign(state.resources, JSON.parse(savedRes));
+                if (savedFac) state.facilities = Object.assign(state.facilities, JSON.parse(savedFac));
+            } catch(e) {
+                console.log("Ingen gemt data fundet, initialiserer ny base.");
+            }
+        }
+
+        function saveBaseGameData() {
+            try {
+                localStorage.setItem('aegis_base_resources', JSON.stringify(state.resources));
+                localStorage.setItem('aegis_base_facilities', JSON.stringify(state.facilities));
+            } catch(e){}
+        }
+
+        function renderBaseResources() {
+            const elTit = document.getElementById('resTitanium');
+            const elNrg = document.getElementById('resEnergy');
+            const elEle = document.getElementById('resElectronics');
+            const elDat = document.getElementById('resDataCores');
+
+            if (elTit) elTit.innerText = state.resources.titanium;
+            if (elNrg) elNrg.innerText = state.resources.energy;
+            if (elEle) elEle.innerText = state.resources.electronics;
+            if (elDat) elDat.innerText = state.resources.dataCores;
+
+            const lRad = document.getElementById('lvlRadar');
+            const lBoo = document.getElementById('lvlBoots');
+            const lDef = document.getElementById('lvlDefense');
+            if (lRad) lRad.innerText = `Lvl ${state.facilities.radar}`;
+            if (lBoo) lBoo.innerText = `Lvl ${state.facilities.boots}`;
+            if (lDef) lDef.innerText = `Lvl ${state.facilities.defense}`;
+
+            // Calculate Base Mk Level
+            const totalLevels = state.facilities.radar + state.facilities.boots + state.facilities.defense;
+            const badge = document.getElementById('baseLevelBadge');
+            if (badge) {
+                if (totalLevels < 5) badge.innerText = "MK I";
+                else if (totalLevels < 9) badge.innerText = "MK II";
+                else badge.innerText = "MK III ELITE";
+            }
+        }
+
+        function harvestResourcesFromMovement(currentDistance, currentSpeed) {
+            // Harvest a batch every 0.25 km (250 meters)
+            const delta = currentDistance - state.lastHarvestDistance;
+            if (delta >= 0.25) {
+                state.lastHarvestDistance = currentDistance;
+                
+                // Base multiplier from Radar level
+                const radarMultiplier = 1 + ((state.facilities.radar - 1) * 0.25);
+                
+                let titYield = Math.round((5 + Math.floor(Math.random() * 5)) * radarMultiplier);
+                let nrgYield = Math.round((4 + Math.floor(Math.random() * 4)) * radarMultiplier);
+                let eleYield = Math.round((2 + Math.floor(Math.random() * 3)) * radarMultiplier);
+                let coreYield = 0;
+
+                // High speed sprint reward from Boots
+                if (currentSpeed >= 9.0) {
+                    titYield += 4;
+                    if (Math.random() < 0.4 * state.facilities.boots) {
+                        coreYield += 1;
+                    }
+                }
+
+                // Mission type bonuses
+                if (state.missionType === 'scavenge') {
+                    titYield = Math.round(titYield * 1.5);
+                    nrgYield = Math.round(nrgYield * 1.5);
+                } else if (state.missionType === 'tech') {
+                    eleYield = Math.round(eleYield * 1.8);
+                }
+
+                state.resources.titanium += titYield;
+                state.resources.energy += nrgYield;
+                state.resources.electronics += eleYield;
+                state.resources.dataCores += coreYield;
+
+                saveBaseGameData();
+                renderBaseResources();
+
+                let logMsg = `📦 RESSURCER INDSAMLET (250m): +${titYield} Titanium, +${nrgYield} Energi, +${eleYield} Elektronik`;
+                if (coreYield > 0) logMsg += ` 💎 +${coreYield} DATA CORE!`;
+                logMissionEvent(logMsg);
+
+                // Audio notify operative in headset
+                dispatchAudioCue(`Ressource-drop sikret. Fundet ${titYield} titanium og ${nrgYield} energi.`);
+            }
+        }
+
+        function upgradeFacility(type) {
+            if (type === 'radar') {
+                const costTit = 40 * state.facilities.radar;
+                const costNrg = 20 * state.facilities.radar;
+                if (state.resources.titanium >= costTit && state.resources.energy >= costNrg) {
+                    state.resources.titanium -= costTit;
+                    state.resources.energy -= costNrg;
+                    state.facilities.radar++;
+                    saveBaseGameData();
+                    renderBaseResources();
+                    logMissionEvent(`🛠️ VÆRKSTED: Radar opgraderet til Lvl ${state.facilities.radar}! Rækkevidde forøget.`);
+                    dispatchAudioCue("Basens radar opgraderet til næste niveau.");
+                } else {
+                    alert(`Ikke nok ressourcer! Kræver ${costTit} Titanium og ${costNrg} Energi.`);
+                }
+            } else if (type === 'boots') {
+                const costEle = 35 * state.facilities.boots;
+                const costTit = 30 * state.facilities.boots;
+                if (state.resources.electronics >= costEle && state.resources.titanium >= costTit) {
+                    state.resources.electronics -= costEle;
+                    state.resources.titanium -= costTit;
+                    state.facilities.boots++;
+                    saveBaseGameData();
+                    renderBaseResources();
+                    logMissionEvent(`🛠️ VÆRKSTED: Bioniske Støvler opgraderet til Lvl ${state.facilities.boots}!`);
+                    dispatchAudioCue("Operative exoskelet-støvler opgraderet.");
+                } else {
+                    alert(`Ikke nok ressourcer! Kræver ${costEle} Elektronik og ${costTit} Titanium.`);
+                }
+            } else if (type === 'defense') {
+                const costNrg = 50 * state.facilities.defense;
+                const costCore = 2 * state.facilities.defense;
+                if (state.resources.energy >= costNrg && state.resources.dataCores >= costCore) {
+                    state.resources.energy -= costNrg;
+                    state.resources.dataCores -= costCore;
+                    state.facilities.defense++;
+                    saveBaseGameData();
+                    renderBaseResources();
+                    logMissionEvent(`🛠️ VÆRKSTED: Forsvarsperimeter forstærket til Lvl ${state.facilities.defense}!`);
+                    dispatchAudioCue("Basens perimeter-skjolde forstærket.");
+                } else {
+                    alert(`Ikke nok ressourcer! Kræver ${costNrg} Energi og ${costCore} Data Cores.`);
+                }
+            }
+        }
+
+        /* ==========================================================================
+           ROLES & VIEW SWITCHER
+           ========================================================================== */
         function setRole(newRole) {
             state.role = newRole;
             const hostView = document.getElementById('hostView');
@@ -636,6 +897,7 @@
                     if (state.role === 'host') {
                         updateHostTelemetry(packet.payload);
                         checkMissionMilestones(packet.payload);
+                        harvestResourcesFromMovement(packet.payload.distance, packet.payload.speed);
                     }
                     break;
 
@@ -838,6 +1100,7 @@
             if (state.role === 'host') {
                 updateHostTelemetry(telemetryPayload);
                 checkMissionMilestones(telemetryPayload);
+                harvestResourcesFromMovement(telemetryPayload.distance, telemetryPayload.speed);
             }
         }
 
@@ -906,8 +1169,12 @@
                     logMissionEvent("🤫 HÆNDELSE: Drone passerer. Lydsvag infiltration påkrævet.");
                     break;
                 case 'loot':
-                    message = "Ressourcecontainer lokaliseret. Materialer til basen overført til din profil.";
-                    logMissionEvent("💎 FORSYNING: 50 Titanium og 200 Ammunition opsamlet.");
+                    message = "Ressourcecontainer lokaliseret. Materialer til basen overført til dit lager.";
+                    state.resources.titanium += 25;
+                    state.resources.energy += 20;
+                    saveBaseGameData();
+                    renderBaseResources();
+                    logMissionEvent("💎 FORSYNING: +25 Titanium og +20 Energi opsamlet.");
                     break;
                 case 'status':
                     message = `Status rapport: Du har tilbagelagt ${state.distance.toFixed(1)} kilometer. Dit tempo er stabilt. Fortsæt fremrykning.`;
@@ -918,8 +1185,12 @@
                     logMissionEvent("⚠️ TAKTISK OMLÆGNING: Kurs korrektion sendt.");
                     break;
                 case 'completed':
-                    message = "Målet er nået! Fremragende indsats, Runner Five. Mission gennemført.";
-                    logMissionEvent("🏆 MISSION SUCCES: Sektor sikret. Opgave godkendt.");
+                    message = "Målet er nået! Fremragende indsats, Runner Five. Mission gennemført. Base-belønning udbetalt.";
+                    state.resources.dataCores += 1;
+                    state.resources.energy += 30;
+                    saveBaseGameData();
+                    renderBaseResources();
+                    logMissionEvent("🏆 MISSION SUCCES: Sektor sikret! Bonus: +1 Data Core, +30 Energi.");
                     break;
             }
 
@@ -971,13 +1242,14 @@
             state.missionType = type;
             state.distance = 0.0;
             state.speed = 0.0;
+            state.lastHarvestDistance = 0.0;
             state.missionComplete = false;
             state.halfwayAnnounced = false;
 
             let missionName = "Infiltrer Sektor 7";
-            if (type === 'extraction') missionName = "VIP Ekstraktion fra Z-Zone";
-            if (type === 'scavenge') missionName = "Smedjens Råstof Indsamling";
-            if (type === 'escape') missionName = "Flugt fra Bio-Infektionen";
+            if (type === 'scavenge') missionName = "Råstof Ekstraktion";
+            if (type === 'escape') missionName = "Flugt fra Bio-Zombier";
+            if (type === 'tech') missionName = "Teknologi Raid";
 
             state.objectiveName = `${missionName} (${dist.toFixed(1)} km)`;
             const hostObj = document.getElementById('hostObjectiveText');
