@@ -10,6 +10,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <!-- PeerJS for direct Real WebRTC between Phone (5G) & PC -->
     <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+    <!-- Three.js 3D Engine for Interactive World & Vehicle -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <!-- FontAwesome for tactical icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Font: Rajdhani & Share Tech Mono -->
@@ -156,6 +158,59 @@
                         <div class="w-full bg-tactical-bg border border-tactical-border h-3 rounded-full overflow-hidden p-0.5">
                             <div id="hostProgressBar" class="h-full bg-gradient-to-r from-tactical-accent to-tactical-success w-0 rounded-full transition-all duration-300 shadow-lg"></div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- 3D INTERACTIVE BASE & ROVER SIMULATOR -->
+                <div class="bg-tactical-panel border border-tactical-border rounded-lg p-4 shadow-2xl relative">
+                    <div class="flex justify-between items-center border-b border-tactical-border pb-3 mb-3">
+                        <div class="flex items-center space-x-2">
+                            <i class="fa-solid fa-gamepad text-tactical-accent text-lg"></i>
+                            <h3 class="text-md font-bold uppercase tracking-wider text-white font-tactical">3D Outpost & Rover Simulation</h3>
+                        </div>
+                        <div class="flex items-center space-x-3 text-xs font-mono">
+                            <span class="text-gray-400">BRÆNDSTOF: <span id="roverFuelBadge" class="text-tactical-warn font-bold">100%</span></span>
+                            <span class="bg-tactical-bg border border-gray-700 px-2 py-0.5 rounded text-[11px] text-gray-300">STYRING: WASD / PILE</span>
+                        </div>
+                    </div>
+
+                    <!-- 3D Canvas Container -->
+                    <div class="relative w-full h-80 rounded overflow-hidden border border-tactical-border bg-black">
+                        <canvas id="threeCanvas" class="w-full h-full block"></canvas>
+                        
+                        <!-- Overlay UI inside 3D viewport -->
+                        <div class="absolute top-2 left-2 pointer-events-none font-mono text-[10px] space-y-1 bg-black/60 p-2 rounded backdrop-blur border border-gray-800">
+                            <div class="text-tactical-accent font-bold flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-tactical-accent animate-ping"></span>
+                                SEKTOR: OUTPOST SIGMA-9
+                            </div>
+                            <div class="text-gray-400">KØRETØJ: BIONISK SCOUT ROVER</div>
+                            <div id="roverCoordinates" class="text-gray-500">POS: X:0 Z:0</div>
+                        </div>
+
+                        <!-- 3D Action Prompt Overlay -->
+                        <div id="zoneActionPrompt" class="hidden absolute bottom-3 left-1/2 -translate-x-1/2 bg-tactical-panel/90 border border-tactical-accent px-4 py-2 rounded-full font-mono text-xs text-white shadow-2xl flex items-center gap-2">
+                            <i class="fa-solid fa-hammer text-tactical-accent animate-bounce"></i>
+                            <span id="zonePromptText">Byg Solcellekuppel [Tryk E]</span>
+                        </div>
+                    </div>
+
+                    <!-- 3D Control Hints & Rover Specs -->
+                    <div class="grid grid-cols-3 gap-2 mt-3 text-center text-xs font-mono">
+                        <button onclick="driveRoverForward()" class="bg-tactical-bg hover:bg-tactical-panel border border-tactical-border py-2 rounded text-gray-300 active:text-tactical-accent transition">
+                            <i class="fa-solid fa-arrow-up"></i> Fremad
+                        </button>
+                        <div class="flex gap-2">
+                            <button onclick="turnRover(-1)" class="flex-1 bg-tactical-bg hover:bg-tactical-panel border border-tactical-border py-2 rounded text-gray-300 active:text-tactical-accent transition">
+                                <i class="fa-solid fa-arrow-left"></i>
+                            </button>
+                            <button onclick="turnRover(1)" class="flex-1 bg-tactical-bg hover:bg-tactical-panel border border-tactical-border py-2 rounded text-gray-300 active:text-tactical-accent transition">
+                                <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        </div>
+                        <button onclick="refuelRover()" class="bg-tactical-bg hover:bg-tactical-panel border border-tactical-warn/50 hover:border-tactical-warn py-2 rounded text-tactical-warn font-bold transition flex items-center justify-center gap-1">
+                            <i class="fa-solid fa-charging-station"></i> Genoplad (5 Energi)
+                        </button>
                     </div>
                 </div>
 
@@ -1324,7 +1379,388 @@
                     setSimSpeed(parseFloat(e.target.value));
                 });
             }
+
+            // Keyboard navigation for 3D Rover
+            window.addEventListener('keydown', handle3DKeydown);
+            window.addEventListener('keyup', handle3DKeyup);
+            window.addEventListener('resize', onThreeWindowResize);
         }
+
+        /* ==========================================================================
+           THREE.JS 3D WORLD & INTERACTIVE VEHICLE SYSTEM
+           ========================================================================== */
+        const threeState = {
+            scene: null,
+            camera: null,
+            renderer: null,
+            rover: null,
+            structures: [],
+            buildPads: [],
+            keys: {},
+            roverSpeed: 0,
+            roverHeading: 0,
+            fuel: 100,
+            nearPad: null,
+            initialized: false
+        };
+
+        function init3DWorld() {
+            if (threeState.initialized) return;
+            const container = document.getElementById('threeCanvas');
+            if (!container) return;
+
+            // Scene setup
+            threeState.scene = new THREE.Scene();
+            threeState.scene.background = new THREE.Color(0x050811);
+            threeState.scene.fog = new THREE.FogExp2(0x050811, 0.025);
+
+            // Camera setup
+            const width = container.clientWidth || 600;
+            const height = container.clientHeight || 320;
+            threeState.camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
+            threeState.camera.position.set(0, 10, 15);
+
+            // WebGL Renderer
+            threeState.renderer = new THREE.WebGLRenderer({ canvas: container, antialias: true });
+            threeState.renderer.setSize(width, height);
+            threeState.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            threeState.renderer.shadowMap.enabled = true;
+
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0x223344, 1.2);
+            threeState.scene.add(ambientLight);
+
+            const sunLight = new THREE.DirectionalLight(0x00f0ff, 1.5);
+            sunLight.position.set(20, 40, 20);
+            sunLight.castShadow = true;
+            threeState.scene.add(sunLight);
+
+            // Terrain Grid Floor
+            const gridHelper = new THREE.GridHelper(80, 40, 0x00f0ff, 0x112233);
+            gridHelper.position.y = -0.01;
+            threeState.scene.add(gridHelper);
+
+            const floorGeo = new THREE.PlaneGeometry(100, 100);
+            const floorMat = new THREE.MeshStandardMaterial({ color: 0x070b14, roughness: 0.85, metalness: 0.2 });
+            const floorMesh = new THREE.Mesh(floorGeo, floorMat);
+            floorMesh.rotation.x = -Math.PI / 2;
+            floorMesh.receiveShadow = true;
+            threeState.scene.add(floorMesh);
+
+            // Build Central Outpost HQ
+            createCentralBaseBuilding();
+
+            // Build interactive construction pads around base
+            createConstructionPads();
+
+            // Build Sci-Fi Rover Vehicle
+            createRoverMesh();
+
+            threeState.initialized = true;
+            animate3D();
+        }
+
+        function createCentralBaseBuilding() {
+            const baseGroup = new THREE.Group();
+
+            // Main Dome
+            const domeGeo = new THREE.SphereGeometry(3, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2);
+            const domeMat = new THREE.MeshStandardMaterial({ color: 0x0c1e33, wireframe: false, roughness: 0.3, metalness: 0.8 });
+            const dome = new THREE.Mesh(domeGeo, domeMat);
+            baseGroup.add(dome);
+
+            // Wireframe Neon Ring
+            const ringGeo = new THREE.TorusGeometry(3.1, 0.08, 8, 24);
+            const ringMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
+            const ring = new THREE.Mesh(ringGeo, ringMat);
+            ring.rotation.x = Math.PI / 2;
+            baseGroup.add(ring);
+
+            // Radar Tower Antenna
+            const mastGeo = new THREE.CylinderGeometry(0.1, 0.2, 4);
+            const mastMat = new THREE.MeshStandardMaterial({ color: 0x8899aa });
+            const mast = new THREE.Mesh(mastGeo, mastMat);
+            mast.position.y = 3.5;
+            baseGroup.add(mast);
+
+            // Rotating Dish
+            const dishGeo = new THREE.ConeGeometry(0.8, 0.4, 12, 1, true);
+            const dishMat = new THREE.MeshBasicMaterial({ color: 0xffb703, wireframe: true });
+            const dish = new THREE.Mesh(dishGeo, dishMat);
+            dish.position.y = 5.2;
+            dish.rotation.x = Math.PI / 3;
+            baseGroup.add(dish);
+            baseGroup.userData.dish = dish;
+
+            threeState.scene.add(baseGroup);
+            threeState.structures.push(baseGroup);
+        }
+
+        function createConstructionPads() {
+            const padLocations = [
+                { x: -12, z: -10, name: "Solcellekuppel", type: "solar", costTit: 20, costEle: 15, built: false },
+                { x: 12, z: -10, name: "Forskningslaboratorium", type: "lab", costTit: 30, costEle: 25, built: false },
+                { x: 0, z: 14, name: "Forsvarstårn & Silo", type: "turret", costTit: 25, costNrg: 30, built: false }
+            ];
+
+            padLocations.forEach((padData) => {
+                const padGroup = new THREE.Group();
+                padGroup.position.set(padData.x, 0.05, padData.z);
+
+                const ringGeo = new THREE.RingGeometry(1.8, 2.2, 24);
+                const ringMat = new THREE.MeshBasicMaterial({ color: 0xffb703, side: THREE.DoubleSide });
+                const ring = new THREE.Mesh(ringGeo, ringMat);
+                ring.rotation.x = Math.PI / 2;
+                padGroup.add(ring);
+
+                padGroup.userData = padData;
+                threeState.scene.add(padGroup);
+                threeState.buildPads.push(padGroup);
+            });
+        }
+
+        function createRoverMesh() {
+            const roverGroup = new THREE.Group();
+
+            // Main Chassis
+            const bodyGeo = new THREE.BoxGeometry(1.4, 0.6, 2.2);
+            const bodyMat = new THREE.MeshStandardMaterial({ color: 0x00f0ff, roughness: 0.4, metalness: 0.7 });
+            const body = new THREE.Mesh(bodyGeo, bodyMat);
+            body.position.y = 0.6;
+            roverGroup.add(body);
+
+            // Cockpit Windshield
+            const glassGeo = new THREE.BoxGeometry(1.1, 0.4, 0.9);
+            const glassMat = new THREE.MeshBasicMaterial({ color: 0x05070a });
+            const glass = new THREE.Mesh(glassGeo, glassMat);
+            glass.position.set(0, 0.85, 0.2);
+            roverGroup.add(glass);
+
+            // Neon Headlights
+            const lightGeo = new THREE.SphereGeometry(0.12, 8, 8);
+            const lightMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+            const l1 = new THREE.Mesh(lightGeo, lightMat);
+            const l2 = new THREE.Mesh(lightGeo, lightMat);
+            l1.position.set(-0.5, 0.55, 1.12);
+            l2.position.set(0.5, 0.55, 1.12);
+            roverGroup.add(l1);
+            roverGroup.add(l2);
+
+            // 4 Wheels
+            const wheelGeo = new THREE.CylinderGeometry(0.35, 0.35, 0.3, 12);
+            const wheelMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9 });
+            const wheelOffsets = [
+                [-0.85, 0.35, -0.7],
+                [0.85, 0.35, -0.7],
+                [-0.85, 0.35, 0.7],
+                [0.85, 0.35, 0.7]
+            ];
+
+            wheelOffsets.forEach(([wx, wy, wz]) => {
+                const wheel = new THREE.Mesh(wheelGeo, wheelMat);
+                wheel.rotation.z = Math.PI / 2;
+                wheel.position.set(wx, wy, wz);
+                roverGroup.add(wheel);
+            });
+
+            roverGroup.position.set(0, 0, 7);
+            threeState.scene.add(roverGroup);
+            threeState.rover = roverGroup;
+        }
+
+        function handle3DKeydown(e) {
+            threeState.keys[e.key.toLowerCase()] = true;
+            if (e.key.toLowerCase() === 'e' && threeState.nearPad) {
+                buildOnPad(threeState.nearPad);
+            }
+        }
+
+        function handle3DKeyup(e) {
+            threeState.keys[e.key.toLowerCase()] = false;
+        }
+
+        function driveRoverForward() {
+            if (threeState.fuel > 0) {
+                threeState.roverSpeed = Math.min(threeState.roverSpeed + 0.15, 0.4);
+                consumeFuel(0.4);
+            }
+        }
+
+        function turnRover(dir) {
+            threeState.roverHeading += dir * 0.1;
+        }
+
+        function consumeFuel(amount) {
+            threeState.fuel = Math.max(0, threeState.fuel - amount);
+            const fuelBadge = document.getElementById('roverFuelBadge');
+            if (fuelBadge) {
+                fuelBadge.innerText = `${Math.round(threeState.fuel)}%`;
+                if (threeState.fuel < 20) fuelBadge.className = "text-tactical-danger font-bold";
+                else fuelBadge.className = "text-tactical-warn font-bold";
+            }
+        }
+
+        function refuelRover() {
+            if (state.resources.energy >= 5) {
+                state.resources.energy -= 5;
+                threeState.fuel = 100;
+                saveBaseGameData();
+                renderBaseResources();
+                consumeFuel(0);
+                logMissionEvent("🔋 ROVER GENOPLADET: 100% batteri gendannet via 5 Energi.");
+                dispatchAudioCue("Køretøj fuldt opladet fra basens strømceller.");
+            } else {
+                alert("Ikke nok energi! Gå eller løb i den virkelige verden for at skaffe mere energi.");
+            }
+        }
+
+        function buildOnPad(padGroup) {
+            const data = padGroup.userData;
+            if (data.built) return;
+
+            const titCost = data.costTit || 0;
+            const eleCost = data.costEle || 0;
+            const nrgCost = data.costNrg || 0;
+
+            if (state.resources.titanium >= titCost && state.resources.electronics >= eleCost && state.resources.energy >= nrgCost) {
+                state.resources.titanium -= titCost;
+                state.resources.electronics -= eleCost;
+                state.resources.energy -= nrgCost;
+                data.built = true;
+
+                // Build 3D structure on pad
+                let newMesh;
+                if (data.type === 'solar') {
+                    const domeGeo = new THREE.SphereGeometry(1.4, 12, 12, 0, Math.PI * 2, 0, Math.PI / 2);
+                    const domeMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff, wireframe: true });
+                    newMesh = new THREE.Mesh(domeGeo, domeMat);
+                } else if (data.type === 'lab') {
+                    const boxGeo = new THREE.BoxGeometry(2, 2, 2);
+                    const boxMat = new THREE.MeshStandardMaterial({ color: 0xb5179e, roughness: 0.3 });
+                    newMesh = new THREE.Mesh(boxGeo, boxMat);
+                    newMesh.position.y = 1;
+                } else {
+                    const cylGeo = new THREE.CylinderGeometry(0.8, 1, 3, 8);
+                    const cylMat = new THREE.MeshStandardMaterial({ color: 0xff0055, roughness: 0.5 });
+                    newMesh = new THREE.Mesh(cylGeo, cylMat);
+                    newMesh.position.y = 1.5;
+                }
+
+                padGroup.add(newMesh);
+                saveBaseGameData();
+                renderBaseResources();
+                logMissionEvent(`🏗️ 3D BASE BYGNING: ${data.name} opført!`);
+                dispatchAudioCue(`Ny facilitet opført på basen: ${data.name}.`);
+                document.getElementById('zoneActionPrompt').classList.add('hidden');
+            } else {
+                alert(`Mangler ressourcer til ${data.name}! Kræver: ${titCost} Tit, ${eleCost} Ele, ${nrgCost} Energi.`);
+            }
+        }
+
+        function update3DPhysics() {
+            if (!threeState.rover) return;
+
+            // Input check
+            const k = threeState.keys;
+            const isAccelerating = (k['w'] || k['arrowup']) && threeState.fuel > 0;
+            const isReversing = (k['s'] || k['arrowdown']) && threeState.fuel > 0;
+
+            if (isAccelerating) {
+                threeState.roverSpeed = Math.min(threeState.roverSpeed + 0.015, 0.3);
+                consumeFuel(0.08);
+            } else if (isReversing) {
+                threeState.roverSpeed = Math.max(threeState.roverSpeed - 0.015, -0.15);
+                consumeFuel(0.08);
+            } else {
+                threeState.roverSpeed *= 0.92; // Friction
+            }
+
+            if (k['a'] || k['arrowleft']) {
+                threeState.roverHeading += 0.045 * (threeState.roverSpeed >= 0 ? 1 : -1);
+            }
+            if (k['d'] || k['arrowright']) {
+                threeState.roverHeading -= 0.045 * (threeState.roverSpeed >= 0 ? 1 : -1);
+            }
+
+            // Move rover
+            threeState.rover.rotation.y = threeState.roverHeading;
+            threeState.rover.position.x += Math.sin(threeState.roverHeading) * threeState.roverSpeed;
+            threeState.rover.position.z += Math.cos(threeState.roverHeading) * threeState.roverSpeed;
+
+            // Restrict bounds
+            threeState.rover.position.x = Math.max(-35, Math.min(35, threeState.rover.position.x));
+            threeState.rover.position.z = Math.max(-35, Math.min(35, threeState.rover.position.z));
+
+            // Smooth chase camera
+            const targetCamX = threeState.rover.position.x - Math.sin(threeState.roverHeading) * 8;
+            const targetCamZ = threeState.rover.position.z - Math.cos(threeState.roverHeading) * 8;
+            threeState.camera.position.x += (targetCamX - threeState.camera.position.x) * 0.1;
+            threeState.camera.position.z += (targetCamZ - threeState.camera.position.z) * 0.1;
+            threeState.camera.position.y = 5.5;
+            threeState.camera.lookAt(threeState.rover.position.x, 1.2, threeState.rover.position.z);
+
+            // Update Coordinates UI
+            const coordEl = document.getElementById('roverCoordinates');
+            if (coordEl) {
+                coordEl.innerText = `POS: X:${Math.round(threeState.rover.position.x)} Z:${Math.round(threeState.rover.position.z)}`;
+            }
+
+            // Rotate HQ radar dish
+            if (threeState.structures[0] && threeState.structures[0].userData.dish) {
+                threeState.structures[0].userData.dish.rotation.z += 0.015;
+            }
+
+            // Check distance to construction pads
+            checkProximityToPads();
+        }
+
+        function checkProximityToPads() {
+            let foundPad = null;
+            const promptBox = document.getElementById('zoneActionPrompt');
+            const promptText = document.getElementById('zonePromptText');
+
+            threeState.buildPads.forEach((pad) => {
+                const dist = threeState.rover.position.distanceTo(pad.position);
+                if (dist < 3.2 && !pad.userData.built) {
+                    foundPad = pad;
+                }
+            });
+
+            threeState.nearPad = foundPad;
+            if (foundPad) {
+                promptBox.classList.remove('hidden');
+                promptText.innerText = `Byg ${foundPad.userData.name} [Tryk E på tastatur]`;
+            } else {
+                promptBox.classList.add('hidden');
+            }
+        }
+
+        function animate3D() {
+            requestAnimationFrame(animate3D);
+            if (state.role === 'host') {
+                update3DPhysics();
+                if (threeState.renderer && threeState.scene && threeState.camera) {
+                    threeState.renderer.render(threeState.scene, threeState.camera);
+                }
+            }
+        }
+
+        function onThreeWindowResize() {
+            const container = document.getElementById('threeCanvas');
+            if (!container || !threeState.renderer || !threeState.camera) return;
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            threeState.camera.aspect = width / height;
+            threeState.camera.updateProjectionMatrix();
+            threeState.renderer.setSize(width, height);
+        }
+
+        // Initialize 3D when host mode is confirmed
+        const origInitHostPeer = initHostPeer;
+        initHostPeer = function() {
+            origInitHostPeer();
+            setTimeout(init3DWorld, 200);
+        };
     </script>
 </body>
 </html>
